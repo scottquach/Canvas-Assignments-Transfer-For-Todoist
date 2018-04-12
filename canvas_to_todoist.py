@@ -56,12 +56,15 @@ def load_todoist_tasks():
     for task in tasks:
         todoist_tasks.append(task)
 
+# Loads all user projects from Todoist
 def load_todoist_projects():
     projects = todoist_api.state['projects']
     for project in projects:
         todoist_project_dict[project['name']] = project['id']
     # print(todoist_project_dict)
 
+# Checks to see if the user has a project matching their course names, if there
+# isn't a new project will be created
 def create_todoist_projects():
     for course_name in course_name_id_dict:
         if course_name not in todoist_project_dict:
@@ -73,7 +76,9 @@ def create_todoist_projects():
         else:
             print("the key was in dict, don't create project")
 
-def sync_todoist_and_canvas():
+# Transfers over assignments from canvas over to Todoist, the method Checks
+# to make sure the assignment has not already been trasnfered to prevent overlap
+def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = course_id_name_dict[assignment['course_id']]
         assignment_name = assignment['name']
@@ -108,4 +113,4 @@ def add_new_task(assignment, project_id):
 #
 # create_todoist_projects()
 #
-# sync_todoist_and_canvas()
+# transfer_assignments_to_todoist()
