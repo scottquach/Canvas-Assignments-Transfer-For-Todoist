@@ -4,7 +4,7 @@ from todoist.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 from retrieve_canvas_course_ids import load_courses
 
-with open("C:\\Users\\Scott Quach\\Desktop\\Python Stuff\\api_keys.txt") as api_file:
+with open("api_keys.txt") as api_file:
     keys = api_file.readlines()
 
 #Initialize TodoistAPI
@@ -17,7 +17,6 @@ canvas_api_heading = 'https://canvas.instructure.com'
 canvas_token = keys[1].strip()
 
 courses_id_name_dict = load_courses(False)
-# course_name_id_dict = {v:k for k,v in course_id_name_dict.items()}
 
 course_ids = []
 for course_id in keys[2:]:

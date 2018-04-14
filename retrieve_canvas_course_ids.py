@@ -1,6 +1,6 @@
 import requests
 
-with open("C:\\Users\\Scott Quach\\Desktop\\Python Stuff\\api_keys.txt") as api_file:
+with open("api_keys.txt") as api_file:
     keys = api_file.readlines()
 
 canvas_api_heading = 'https://canvas.instructure.com'
