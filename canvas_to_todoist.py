@@ -23,20 +23,6 @@ course_ids = []
 for course_id in keys[2:]:
     course_ids.append(int(course_id.strip()))
 
-#Course ID of the current courses I'm taking
-# css_342_id = 100000001130860
-# css_301_id = 100000001130859
-# css_360_id = 100000001215804
-
-# course_name_id_dict = {
-#                         'CSS 342 Data Structures and Algorithms': css_342_id,
-#                         'CSS 301 Technical Writing': css_301_id,
-#                         'CSS 360 Software Engineering': css_360_id}
-# course_id_name_dict = {
-#                         css_342_id: 'CSS 342 Data Structures and Algorithms',
-#                         css_301_id: 'CSS 301 Technical Writing',
-#                         css_360_id: 'CSS 360 Software Engineering'}
-
 header = {"Authorization":"Bearer " + canvas_token}
 param = {'per_page': '100', 'include':'submission'}
 
