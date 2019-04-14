@@ -17,6 +17,7 @@ This project provides you with an easy way to transfer all of your assignments f
 **You will then need the course ID of the classes whose assignments you would like to transfer. This is easy to find thanks to an included script titled ```retrieve_canvas_course_ids```**
 - Run the script by calling ```python retrieve_canvas_course_ids.py```
 - Your courses will be listed with the associated ID
+- This step is necessary and not automated b/c some teachers don't archive their classes for the next quarter and old assignments could be added by mistake
 
 **Add course ID to the api_keys.txt file**
 - Once you have retrieved the required course ID follow the prompt on the api_keys.txt file to add those IDs. An infinite number of courses can be added as long as each course ID is on it's own line. 
