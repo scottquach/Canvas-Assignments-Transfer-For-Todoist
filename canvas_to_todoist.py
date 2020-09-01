@@ -94,8 +94,9 @@ def transfer_assignments_to_todoist():
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
-    test_task = todoist_api.items.add(assignment['name'] + ' Due', project_id,
-    date_string=assignment['due_at'])
+    test_task = todoist_api.items.add(assignment['name'] + ' Due',
+            project_id=project_id,
+            date_string=assignment['due_at'])
 
 load_todoist_projects()
 load_assignments()
