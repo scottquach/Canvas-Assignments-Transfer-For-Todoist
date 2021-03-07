@@ -26,3 +26,6 @@ This project provides you with an easy way to transfer all of your assignments f
 - Run the main script by calling ```python retrieve_canvas_course_ids.py```
 - The scrip will run and transfer assignments over to Todoist, assigments will be checked for overlap meaning running the script multiple times won't re-add assignments that already exist in Todoist. 
 - Assignments will be added to assigned to automatically generated projects in Todoist. The project names will match with the official course names pulled from Canvas
+
+## Contributing 
+I'm still active in the community so feel free to submit a PR for any contriubations you'd like to make to the project!
