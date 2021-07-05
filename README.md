@@ -22,10 +22,14 @@ This project provides you with an easy way to transfer all of your assignments f
 **Add course ID to the api_keys.txt file**
 - Once you have retrieved the required course ID follow the prompt on the api_keys.txt file to add those IDs. An infinite number of courses can be added as long as each course ID is on it's own line. 
 
+**Install dependencies**
+- Install dependencies with `pip install -r requirements.txt`
+
 **Run the main script**
-- Run the main script by calling ```python retrieve_canvas_course_ids.py```
-- The scrip will run and transfer assignments over to Todoist, assigments will be checked for overlap meaning running the script multiple times won't re-add assignments that already exist in Todoist. 
-- Assignments will be added to assigned to automatically generated projects in Todoist. The project names will match with the official course names pulled from Canvas
+- Run the main script by calling ```python canvas_to_todoist.py```
+- The script will run and transfer assignments over to Todoist
+  - Assignments will be checked for overlap, so running the script multiple times won't re-add assignments that already exist in Todoist. 
+- Assignments will be added to automatically generated projects in Todoist. The project names will match with the official course names pulled from Canvas
 
 ## Contributing 
-I'm still active in the community so feel free to submit a PR for any contriubations you'd like to make to the project!
+I'm still active in the community so feel free to submit a PR for any contributions you'd like to make to the project!
