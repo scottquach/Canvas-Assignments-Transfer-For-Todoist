@@ -88,13 +88,13 @@ def transfer_assignments_to_todoist():
             else:
                 print("assignment already submitted " + assignment['name'])
         else:
-            print("assignmentt already synced")
+            print("assignment already synced")
     todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
-    test_task = todoist_api.items.add(assignment['name'] + ' Due',
+    todoist_api.add_item(assignment['name'] + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'])
 

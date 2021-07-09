@@ -18,7 +18,8 @@ def load_courses(should_print):
     for course in response.json():
         courses_id_name_dict[course.get('id', None)] = course.get('name', None)
         if should_print:
-            print(course.get('name', "Couldn't load") + ': ' + str(course.get('id', "")))
+            if course.get('name') != None:
+                print(course.get('name') + ': ' + str(course.get('id', "")))
     return courses_id_name_dict
 
 load_courses(True)
