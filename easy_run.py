@@ -152,7 +152,7 @@ def transfer_assignments_to_todoist():
 
         is_synced = False
         for task in todoist_tasks:
-            if task['content'] == (assignment_name + ' Due') and \
+            if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
                 is_synced = True
@@ -170,7 +170,7 @@ def transfer_assignments_to_todoist():
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_item(assignment['name'] + ' Due',
+    todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'])
 
