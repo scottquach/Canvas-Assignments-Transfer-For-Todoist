@@ -1,4 +1,5 @@
 import requests
+import re
 import json
 from todoist.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
@@ -81,14 +82,15 @@ def select_courses(keys):
             for course_id in keys[2:]:
                 course_ids.append(int(course_id.strip()))
             for course in response.json():
-                courses_id_name_dict[course.get('id', None)] = course.get('name', None)
+                courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
             return
+
     # If the user does not choose to use courses selected last time
     i = 1
     for course in response.json():
-        courses_id_name_dict[course.get('id', None)] = course.get('name', None)
+        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
         if course.get('name') != None:
-            print(str(i) + ") " + course.get('name') + ': ' + str(course.get('id', "")))
+            print(str(i) + ") " + courses_id_name_dict[course.get('id', "")]  + ': ' + str(course.get('id', "")))
         i+=1
     print("\nEnter the courses you would like to add to todoist by entering the numbers of the items you would like to select. Seperate numbers with spaces")
     my_input = input(">")
