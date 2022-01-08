@@ -10,8 +10,10 @@ header = {'Authorization': 'Bearer ' + canvas_token}
 param = {'per_page': 100}
 
 def load_courses(should_print):
+    # print("header", header);
     response = requests.get(canvas_api_heading + '/api/v1/courses',
-         headers=header, params=param)
+         headers=header)
+    # print("RESPONSE", response)
 
     courses_id_name_dict = {}
 

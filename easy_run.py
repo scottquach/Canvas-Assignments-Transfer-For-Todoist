@@ -19,6 +19,7 @@ def main():
     print("###################################################\n")
 
     initialize_api()
+    print("API INITIALIZED")
     select_courses(keys)
     print("Working...")
     load_todoist_projects()
@@ -32,18 +33,33 @@ def main():
 def initialize_api():
     with open("api_keys.txt") as api_file:
         keys = api_file.readlines()
-    if keys[0] == "Replace THIS line with the Todoist API token. Remove trailing spaces\n" or len(keys) == 0:
-        print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
-        keys[0] = input(">") + "\n"
-        f = open("api_keys.txt", "w")
-        f.writelines(keys)
-        f.close()
-    if keys[1] == "Replace THIS line with the Canvas API token. Remove Trailing spaces\n":
+    # print(keys);
+
+    if len(keys) == 0 :
         print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
-        keys[1] = input(">") + "\n"
+        keys.append(input(">") + "\n");
         f = open("api_keys.txt", "w")
         f.writelines(keys)
         f.close()
+        print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
+        keys.append(input(">") + "\n")
+        f = open("api_keys.txt", "w")
+        f.writelines(keys)
+        f.close()
+    else:
+        if keys[0] == "Replace THIS line with the Todoist API token. Remove trailing spaces\n" :
+                print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
+                keys[0] = input(">") + "\n"
+                f = open("api_keys.txt", "w")
+                f.writelines(keys)
+                f.close()
+        if keys[1] == "Replace THIS line with the Canvas API token. Remove Trailing spaces\n":
+            print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
+            keys[1] = input(">") + "\n"
+            f = open("api_keys.txt", "w")
+            f.writelines(keys)
+            f.close()
+
     #create todoist_api object globally
     global todoist_api
     todoist_api = TodoistAPI(keys[0].strip())
