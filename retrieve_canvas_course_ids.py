@@ -23,8 +23,8 @@ def load_courses(should_print):
 
     for course in response.json():
         # print(course)
-        # courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', 'test@34x&# hi')
-        courses_id_name_dict[course.get('id', None)] = course.get('name', '')
+        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
+        # courses_id_name_dict[course.get('id', None)] = course.get('name', '')
         if should_print:
             if course.get('name') != None:
                 print(courses_id_name_dict[course.get('id', None)] + ': ' + str(course.get('id', "")))
