@@ -48,7 +48,7 @@ def initialize_api():
         f.writelines(keys)
         f.close()
     else:
-        if keys[0] == "Replace THIS line with the Todoist API token. Remove trailing spaces\n" :
+        if keys[0] == "Replace THIS liane with the Todoist API token. Remove trailing spaces\n" :
                 print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
                 keys[0] = input(">") + "\n"
                 f = open("api_keys.txt", "w")
@@ -73,6 +73,9 @@ def initialize_api():
 def select_courses(keys):
     response = requests.get(canvas_api_heading + '/api/v1/courses',
             headers=header, params=param)
+    if response.status_code ==401:
+        print('Unauthorized; Check API Key')
+        exit()  
     with open("api_keys.txt") as api_file:
         keys = api_file.readlines()
     if keys[2].strip() != "Replace THIS line and lines AFTER with the course ID of the course you want assignments to trasfer. Remove trailing spaces": #or keys[2:]
@@ -82,13 +85,13 @@ def select_courses(keys):
             for course_id in keys[2:]:
                 course_ids.append(int(course_id.strip()))
             for course in response.json():
-                courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
+                courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z0-9._\s]', '', course.get('name', ''))
             return
 
     # If the user does not choose to use courses selected last time
     i = 1
     for course in response.json():
-        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
+        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z0-9._\s]', '', course.get('name', ''))
         if course.get('name') != None:
             print(str(i) + ") " + courses_id_name_dict[course.get('id', "")]  + ': ' + str(course.get('id', "")))
         i+=1
@@ -114,7 +117,9 @@ def load_assignments():
         response = requests.get(canvas_api_heading + '/api/v1/courses/' +
         str(course_id) + '/assignments', headers=header,
         params=param)
-
+        if response.status_code ==401:
+            print('Unauthorized; Check API Key')
+        exit()
         for assignment in response.json():
             assignments.append(assignment)
 
