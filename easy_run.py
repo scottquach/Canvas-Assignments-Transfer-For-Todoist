@@ -63,6 +63,9 @@ def select_courses():
 
     response = requests.get(canvas_api_heading + '/api/v1/courses',
             headers=header, params=param)
+    if response.status_code ==401:
+        print('Unauthorized; Check API Key')
+        exit()
 
     if config['courses']:
         use_previous_input = input("You have previously selected courses. Would you like to use the courses selected last time? (y/n) ")
@@ -72,13 +75,13 @@ def select_courses():
                 # print(course_id)
                 course_ids.append(int(course_id))
             for course in response.json():
-                courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
+                courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z0-9._\s]', '', course.get('name', ''))
             return
 
     # If the user does not choose to use courses selected last time
     i = 1
     for course in response.json():
-        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
+        courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z0-9._\s]', '', course.get('name', ''))
         if course.get('name') != None:
             print(str(i) + ") " + courses_id_name_dict[course.get('id', "")]  + ': ' + str(course.get('id', "")))
         i+=1
@@ -100,7 +103,9 @@ def load_assignments():
         response = requests.get(canvas_api_heading + '/api/v1/courses/' +
         str(course_id) + '/assignments', headers=header,
         params=param)
-
+        if response.status_code ==401:
+            print('Unauthorized; Check API Key')
+            exit()
         for assignment in response.json():
             assignments.append(assignment)
 
@@ -140,7 +145,7 @@ def transfer_assignments_to_todoist():
 
         is_synced = False
         for task in todoist_tasks:
-            if task['content'] == (assignment_name + ' Due') and \
+            if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
                 is_synced = True
@@ -158,7 +163,7 @@ def transfer_assignments_to_todoist():
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_item(assignment['name'] + ' Due',
+    todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'])
 
