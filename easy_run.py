@@ -119,7 +119,7 @@ def load_assignments():
         params=param)
         if response.status_code ==401:
             print('Unauthorized; Check API Key')
-        exit()
+            exit()
         for assignment in response.json():
             assignments.append(assignment)
 
