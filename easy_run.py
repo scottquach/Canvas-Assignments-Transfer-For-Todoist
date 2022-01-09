@@ -48,7 +48,7 @@ def initialize_api():
         f.writelines(keys)
         f.close()
     else:
-        if keys[0] == "Replace THIS liane with the Todoist API token. Remove trailing spaces\n" :
+        if keys[0] == "Replace THIS line with the Todoist API token. Remove trailing spaces\n" :
                 print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
                 keys[0] = input(">") + "\n"
                 f = open("api_keys.txt", "w")
