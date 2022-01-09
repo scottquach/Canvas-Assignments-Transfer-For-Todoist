@@ -6,7 +6,6 @@ from requests.auth import HTTPDigestAuth
 
 # Loaded configuration files
 config = {}
-canvas_api_heading = 'https://canvas.instructure.com'
 header = {}
 param = {'per_page': '100', 'include':'submission'}
 course_ids = []
@@ -19,7 +18,6 @@ def main():
     print("  ###################################################")
     print(" #     Canvas-Assignments-Transfer-For-Todoist     #")
     print("###################################################\n")
-
     initialize_api()
     print("API INITIALIZED")
     select_courses()
@@ -38,7 +36,6 @@ def initialize_api():
 
     with open("config.json") as config_file:
         config = json.load(config_file);
-
     if len(config['todoist_api_key']) == 0:
         print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
         config['todoist_api_key'] = input(">");
@@ -61,7 +58,7 @@ def initialize_api():
 def select_courses():
     global config
 
-    response = requests.get(canvas_api_heading + '/api/v1/courses',
+    response = requests.get(config['canvas_api_heading'] + '/api/v1/courses',
             headers=header, params=param)
     if response.status_code ==401:
         print('Unauthorized; Check API Key')
@@ -100,7 +97,7 @@ def select_courses():
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
     for course_id in course_ids:
-        response = requests.get(canvas_api_heading + '/api/v1/courses/' +
+        response = requests.get(config['canvas_api_heading'] + '/api/v1/courses/' +
         str(course_id) + '/assignments', headers=header,
         params=param)
         if response.status_code ==401:
