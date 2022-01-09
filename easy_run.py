@@ -4,7 +4,8 @@ import json
 from todoist.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 
-keys = []
+# Loaded configuration files
+config = {}
 canvas_api_heading = 'https://canvas.instructure.com'
 header = {}
 param = {'per_page': '100', 'include':'submission'}
@@ -21,7 +22,7 @@ def main():
 
     initialize_api()
     print("API INITIALIZED")
-    select_courses(keys)
+    select_courses()
     print("Working...")
     load_todoist_projects()
     load_assignments()
@@ -32,55 +33,44 @@ def main():
 
 # Makes sure that the user has their api keys set up and sets api variables
 def initialize_api():
-    with open("api_keys.txt") as api_file:
-        keys = api_file.readlines()
-    # print(keys);
+    global config
+    global todoist_api
 
-    if len(keys) == 0 :
+    with open("config.json") as config_file:
+        config = json.load(config_file);
+
+    if len(config['todoist_api_key']) == 0:
         print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
-        keys.append(input(">") + "\n");
-        f = open("api_keys.txt", "w")
-        f.writelines(keys)
-        f.close()
+        config['todoist_api_key'] = input(">");
+        with open("config.json", "w") as outfile:
+            json.dump(config, outfile)
+    if (len(config['canvas_api_key'])) == 0:
         print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
-        keys.append(input(">") + "\n")
-        f = open("api_keys.txt", "w")
-        f.writelines(keys)
-        f.close()
-    else:
-        if keys[0] == "Replace THIS line with the Todoist API token. Remove trailing spaces\n" :
-                print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
-                keys[0] = input(">") + "\n"
-                f = open("api_keys.txt", "w")
-                f.writelines(keys)
-                f.close()
-        if keys[1] == "Replace THIS line with the Canvas API token. Remove Trailing spaces\n":
-            print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
-            keys[1] = input(">") + "\n"
-            f = open("api_keys.txt", "w")
-            f.writelines(keys)
-            f.close()
+        config['canvas_api_key'] = input(">");
+        with open("config.json", "w") as outfile:
+            json.dump(config, outfile)
 
     #create todoist_api object globally
-    global todoist_api
-    todoist_api = TodoistAPI(keys[0].strip())
+    todoist_api = TodoistAPI(config['todoist_api_key'].strip())
     todoist_api.reset_state()
     todoist_api.sync()
-    header.update({"Authorization":"Bearer " + keys[1].strip()})
+    header.update({"Authorization":"Bearer " + config['canvas_api_key'].strip()})
 
 # Allows the user to select the courses that they want to transfer while generating a dictionary
 # that has course ids as the keys and their names as the values
-def select_courses(keys):
+def select_courses():
+    global config
+
     response = requests.get(canvas_api_heading + '/api/v1/courses',
             headers=header, params=param)
-    with open("api_keys.txt") as api_file:
-        keys = api_file.readlines()
-    if keys[2].strip() != "Replace THIS line and lines AFTER with the course ID of the course you want assignments to trasfer. Remove trailing spaces": #or keys[2:]
+
+    if config['courses']:
         use_previous_input = input("You have previously selected courses. Would you like to use the courses selected last time? (y/n) ")
         print("")
         if use_previous_input == "y" or use_previous_input == "Y":
-            for course_id in keys[2:]:
-                course_ids.append(int(course_id.strip()))
+            for course_id in config['courses']:
+                # print(course_id)
+                course_ids.append(int(course_id))
             for course in response.json():
                 courses_id_name_dict[course.get('id', None)] = re.sub(r'[^-a-zA-Z._\s]', '', course.get('name', ''))
             return
@@ -92,20 +82,16 @@ def select_courses(keys):
         if course.get('name') != None:
             print(str(i) + ") " + courses_id_name_dict[course.get('id', "")]  + ': ' + str(course.get('id', "")))
         i+=1
-    print("\nEnter the courses you would like to add to todoist by entering the numbers of the items you would like to select. Seperate numbers with spaces")
+    print("\nEnter the courses you would like to add to todoist by entering the numbers of the items you would like to select. Separate numbers with spaces")
     my_input = input(">")
     input_array = my_input.split()
     for item in input_array:
         course_ids.append(response.json()[int(item)-1].get('id', None))
 
-    #write course ids to api_keys.txt
-    write_list = keys[0:2]
-    for item in course_ids:
-        write_list.append(str(item) + '\n')
-    f = open("api_keys.txt", "w")
-    f.writelines(write_list)
-    f.close()
-
+    #write course ids to config.json
+    config['courses'] = course_ids
+    with open("config.json", "w") as outfile:
+        json.dump(config, outfile)
 
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
