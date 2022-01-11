@@ -13,6 +13,8 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
+no = ['n','N', 'no', 'NO']
+yes = ['y','Y','YES','yes']
 
 def main():
     print("  ###################################################")
@@ -36,16 +38,30 @@ def initialize_api():
 
     with open("config.json") as config_file:
         config = json.load(config_file);
-    if len(config['todoist_api_key']) == 0:
+    if (config['configured']) == 'no':
+        config['canvas_api_heading'] = "https://canvas.instructure.com";
+        print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
+        custom = input(">") 
+        if custom in no:
+            print("Enter your custom Canvas URL: (example https://university.instructure.com)")
+            config['canvas_api_heading'] = input(">");
         print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
         config['todoist_api_key'] = input(">");
-        with open("config.json", "w") as outfile:
-            json.dump(config, outfile)
-    if (len(config['canvas_api_key'])) == 0:
         print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
         config['canvas_api_key'] = input(">");
+        print("Configure advanced options? Y/N (Default no)")
+        if custom in yes:
+            print("Enter any labels you would like assigned to the tasks, seperated by comma")
+            config['todoist_task_labels'] = input(">");
+            print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
+            config['todoist_task_priority'] = input(">");
+        else:
+            config['todoist_task_labels'] = []
+            config['todoist_task_priority'] = 1
+        config['configured'] = 'yes'
         with open("config.json", "w") as outfile:
             json.dump(config, outfile)
+
 
     #create todoist_api object globally
     todoist_api = TodoistAPI(config['todoist_api_key'].strip())
@@ -156,13 +172,17 @@ def transfer_assignments_to_todoist():
         else:
             print("assignment already synced")
     todoist_api.commit()
+    print(todoist_api)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
     todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
-            date_string=assignment['due_at'])
+            date_string=assignment['due_at'],
+            priority=['todoist_task_priority']
+            )
+    print(todoist_api)
 
 if __name__ == "__main__":
     main()
