@@ -13,6 +13,7 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
+todoist_label_dict = {}
 no = ['n','N', 'no', 'NO']
 yes = ['y','Y','YES','yes']
 
@@ -31,7 +32,7 @@ def main():
     transfer_assignments_to_todoist()
     print("Done!")
 
-# Makes sure that the user has their api keys set up and sets api variables
+# Initial setup for api keys set up and sets api variables
 def initialize_api():
     global config
     global todoist_api
@@ -41,7 +42,8 @@ def initialize_api():
     if (config['configured']) == 'no':
         config['canvas_api_heading'] = "https://canvas.instructure.com";
         print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
-        custom = input(">") 
+        custom = input(">")
+        #If no, prompt for custom URL and set as config_api_heading
         if custom in no:
             print("Enter your custom Canvas URL: (example https://university.instructure.com)")
             config['canvas_api_heading'] = input(">");
@@ -49,16 +51,38 @@ def initialize_api():
         config['todoist_api_key'] = input(">");
         print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
         config['canvas_api_key'] = input(">");
-        print("Configure advanced options? Y/N (Default no)")
-        if custom in yes:
-            print("Enter any labels you would like assigned to the tasks, seperated by comma")
-            config['todoist_task_labels'] = input(">");
-            print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
+        advanced = input("Configure advanced options? Y/N (Default no)")
+        if advanced in yes:
+            print("Specify the task priority - 1 to 4 (default 4)")
             config['todoist_task_priority'] = input(">");
+            print("Enter any labels you would like assigned to the tasks, seperated by comma (Enter for none)")
+            config['todoist_initial_labels'] = input(">").split(",");
         else:
+            #Set task labels to blank and task_priority to defaults
             config['todoist_task_labels'] = []
             config['todoist_task_priority'] = 1
+        ##Prompt user to confirm configuration.
+        print ("You entered the following settings:")
+        print ("Canvas URL:" + config['canvas_api_heading'])
+        print ("Canvas API Key:" + config['canvas_api_key'])
+        print ("Todoist API Key:" + config['todoist_api_key'])
+        if custom in yes:
+            print ("Task Labels" + config['todoist_initial_labels'])
+        correct = input("Is this correct? Y/N ")  
+        if correct in no:
+            print("no")
+            if custom in yes:
+                #Todoist API 4 = Priority 1 in GUI - Correct entered custom priority to API value
+                if config['todoist_task_priority'] == 4:
+                    config['todoist_task_priority'] == 1
+                elif config['todoist_task_priority'] == 3:
+                 config['todoist_task_priority'] == 2
+                elif config['todoist_task_priority'] == 2:
+                    config['todoist_task_priority'] == 3
+                elif config['todoist_task_priority'] == 1:
+                    config['todoist_task_priority'] == 4
         config['configured'] = 'yes'
+        
         with open("config.json", "w") as outfile:
             json.dump(config, outfile)
 
@@ -81,7 +105,7 @@ def select_courses():
         exit()
 
     if config['courses']:
-        use_previous_input = input("You have previously selected courses. Would you like to use the courses selected last time? (y/n) ")
+        use_previous_input = input("You have previously selected courses & labels. Would you like to use the courses selected last time? (y/n) ")
         print("")
         if use_previous_input == "y" or use_previous_input == "Y":
             for course_id in config['courses']:
@@ -133,7 +157,19 @@ def load_todoist_projects():
     projects = todoist_api.state['projects']
     for project in projects:
         todoist_project_dict[project['name']] = project['id']
-    # print(todoist_project_dict)
+    print(todoist_project_dict)
+
+#Loads all todoist labels from Todoist and stores matching IDs from existing entry
+def load_todoist_labels():
+    labels = todoist_api.state['labels']
+    for label in labels:
+        if todoist_label_dict[label]['name'] in config['todoist_task_labels']:
+            todoist_label_dict[label['name']] = label['id']
+            config['todoist_task_labels'] = todoist_label_dict
+    with open("config.json", "w") as outfile:
+        json.dump(config, outfile)    
+    print(todoist_label_dict)
+
 
 # Checks to see if the user has a project matching their course names, if there
 # isn't a new project will be created
@@ -148,8 +184,10 @@ def create_todoist_projects():
         else:
             print("the key was in dict, don't create project")
 
+
+
 # Transfers over assignments from canvas over to Todoist, the method Checks
-# to make sure the assignment has not already been trasnfered to prevent overlap
+# to make sure the assignment has not already been transferred to prevent overlap
 def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment['course_id']]
@@ -172,7 +210,7 @@ def transfer_assignments_to_todoist():
         else:
             print("assignment already synced")
     todoist_api.commit()
-    print(todoist_api)
+    print(todoist_api.commit)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
@@ -180,7 +218,8 @@ def add_new_task(assignment, project_id):
     todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'],
-            priority=['todoist_task_priority']
+            priority=config['todoist_task_priority']
+            #labels=[config['todoist_task_labels']]
             )
     print(todoist_api)
 
