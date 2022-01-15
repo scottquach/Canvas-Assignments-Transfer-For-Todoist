@@ -33,7 +33,7 @@ def main():
     transfer_assignments_to_todoist()
     print("Done!")
 
-# Initial setup for api keys set up and sets api variables
+# Initialize api and setup variables
 def initialize_api():
     global config
     global todoist_api
@@ -45,10 +45,12 @@ def initialize_api():
     todoist_api.sync()
     header.update({"Authorization":"Bearer " + config['canvas_api_key'].strip()})
 
+#If config is not configured, run initial config setup
 def config_setup():
     with open("config.json") as config_file:
         config = json.load(config_file);
     while config['configured'] == 'no':
+        print("***INITIAL CONFIG SETUP***")
         config['canvas_api_heading'] = "https://canvas.instructure.com";
         print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
         custom = input(">")
@@ -65,7 +67,7 @@ def config_setup():
             print("Specify the task priority - 1 to 4 (default 4)")
             config['todoist_task_priority'] = input(">");
         else:
-            #Set task labels to blank and task_priority to defaults
+            #Set task_priority to defaults
             config['todoist_task_priority'] = 1
         ##Prompt user to confirm configuration.
         print ("You entered the following settings:")
@@ -78,7 +80,7 @@ def config_setup():
         else:
             config['configured'] = 'yes'
         if custom in yes:
-            #Todoist API 4 = Priority 1 in GUI - Correct entered custom priority to API value
+            #Todoist API 4 = Priority 1 in GUI - Correct entered priority to match API values
             if config['todoist_task_priority'] == 4:
                 config['todoist_task_priority'] == 1
             elif config['todoist_task_priority'] == 3:
@@ -154,8 +156,6 @@ def load_todoist_projects():
     projects = todoist_api.state['projects']
     for project in projects:
         todoist_project_dict[project['name']] = project['id']
-    #print(todoist_project_dict)
-
 
 # Checks to see if the user has a project matching their course names, if there
 # isn't a new project will be created
@@ -196,10 +196,9 @@ def transfer_assignments_to_todoist():
         else:
             print("assignment already synced")
     todoist_api.commit()
-    #print(todoist_api.commit)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
-# project coreesponding to project_id
+# project corresponding to project_id
 def add_new_task(assignment, project_id):
     todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
@@ -207,7 +206,6 @@ def add_new_task(assignment, project_id):
             priority=config['todoist_task_priority'],
             labels=config['todoist_task_labels']
             )
-    print(todoist_api)
 
 if __name__ == "__main__":
     main()
