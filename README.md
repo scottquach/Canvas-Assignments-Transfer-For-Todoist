@@ -1,9 +1,9 @@
 # Canvas-Assignments-Transfer-For-Todoist
 not created by, affiliated with, or supported by Doist
 
-Transferring assignments from your student Canvas account to your Todoist account couldn't be easier.
+Easily transfers assignments from your student Canvas account to your Todoist account.
 
-This project provides you with an easy way to transfer all of your assignments from a Canvas account into a Todoist account with appropraite due dates and assignment to auto-generated projects that match course names.
+This project provides you with an easy way to transfer all of your assignments from a Canvas account into a Todoist account with appropriate due dates and assignment to auto-generated projects that match course names.
 
 ## How-To
 
@@ -16,7 +16,7 @@ This project provides you with an easy way to transfer all of your assignments f
 Easy run allows all configuration to be done inside of the program, avoiding the hassle of editing the config.json file directly. Just install the dependencies and follow the instructions on screen.
 - Install required packages with `pip install -r requirements.txt`
 - Run `python easy_run.py`
-- Follow the configuration prompts to paste in your API Keys, 
+- Follow the configuration prompts to paste in your API Keys and provide any custom or advanced configuration details.
 
 ### Manual Setup
 If you don't want to use easy run for whatever reason, you can edit the `config.json` file directly, just follow the steps below.
