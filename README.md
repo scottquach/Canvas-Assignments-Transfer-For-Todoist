@@ -50,4 +50,4 @@ Q: I'm getting some keyErrors
 A: This most likely is due to a change in your canvas classes that no longer match the JSON. Select "no" and then re-select the class IDs.
 
 ## Contributing
-I'm still active in the community so feel free to submit a PR for any contributions you'd like to make to the project!
+I'm still active in the community so feel free to submit an issue or PR for anything that comes up and I'm happy to help!
