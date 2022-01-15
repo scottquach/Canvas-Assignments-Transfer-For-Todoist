@@ -41,5 +41,13 @@ If you don't want to use easy run for whatever reason, you can edit the `config.
   - Assignments will be checked for overlap, so running the script multiple times won't re-add assignments that already exist in Todoist.
 - Assignments will be added to automatically generated projects in Todoist. The project names will match with the official course names pulled from Canvas
 
+## Bugs/Questions
+
+Q: How do I re-run the initial config setup?
+A: Simply set "configured" to false (or alternatively, delete the config.json and replace with a new downloaded one.
+
+Q: I'm getting some keyErrors 
+A: This most likely is due to a change in your canvas classes that no longer match the JSON. Select "no" and then re-select the class IDs.
+
 ## Contributing
 I'm still active in the community so feel free to submit a PR for any contributions you'd like to make to the project!
