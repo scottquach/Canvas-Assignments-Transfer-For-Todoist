@@ -154,7 +154,7 @@ def transfer_assignments_to_todoist():
                     # print(task)
                     # print(assignment)
                     item = task
-                    print("Updating assignment due date: " + assignment['name'] + " to " + assignment['due_at'])
+                    print("Updating assignment due date: " + assignment['name'] + " to " + str(assignment['due_at']))
                     break;
             # print(assignment)
 
