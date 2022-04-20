@@ -49,9 +49,5 @@ A: Simply set "configured" to false (or alternatively, delete the config.json an
 Q: I'm getting some keyErrors 
 A: This most likely is due to a change in your canvas classes that no longer match the JSON. Select "no" and then re-select the class IDs.
 
-## Known Limitations/Current Issues (as of Jan 2022)
-- Tasks are only synced initially by name; thereafter any modifications made in Canvas will not sync if the task by the same name already exist. For example, if the Due Date is updated in Canvas, the script won't update it in Todoist unless you delete/complete/remove the Todoist task.
-- Some teachers may enter pages or content in as an assignment as canvas (that can't be completed or submitted). Since those can't be differentiated from via API, they will sync as tasks on each Sync. 
-
 ## Contributing
 I'm still active in the community so feel free to submit an issue or PR for anything that comes up and I'm happy to help!
