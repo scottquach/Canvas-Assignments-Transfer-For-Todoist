@@ -21,7 +21,7 @@ Easy run allows all configuration to be done inside of the program, avoiding the
 ### Manual Setup
 If you don't want to use easy run for whatever reason, you can edit the `config.json` file directly, just follow the steps below.
 1) Replace the "Todoist_api_Key" value with your todoist API key
-2) Replace the "Ccanvas_api_key" value with your Canvas API Key
+2) Replace the "Canvas_api_key" value with your Canvas API Key
 3) Replace the "canvas_api_heading" value with your Canvas URL (defualt is https://canvas.instructure.com)
 4) replace the "todoist_task_priority" with the priority value you would like the tasks created at (note that API values are opposite of GUI values - i.e. "1" equals a Priority 4, and "4" equals a Priority 1)
 5) If desired, place the label IDs of any Todoist task labels you would like added in the "Todoist_task_labels" field.
