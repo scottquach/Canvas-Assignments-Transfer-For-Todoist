@@ -156,23 +156,35 @@ def transfer_assignments_to_todoist():
         assignment_name = assignment['name']
         project_id = todoist_project_dict[course_name]
 
-        is_synced = False
+        is_added = False
+        is_synced = True
+        item = None
         for task in todoist_tasks:
             if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
-                is_synced = True
+                is_added = True
+                # print(assignment)
+                if (task['due'] and task['due']['date'] != assignment['due_at']):
+                    is_synced = False
+                    # print(task)
+                    # print(assignment)
+                    item = task
+                    print("Updating assignment due date: " + assignment['name'] + " to " + str(assignment['due_at']))
+                    break;
+            # print(assignment)
 
-        if not is_synced:
-            if assignment['submission']['submitted_at'] == None:
+        if not is_added:
+            if (assignment['submission']['workflow_state'] == "unsubmitted"):
                 print("Adding assignment " + assignment['name'])
                 add_new_task(assignment, project_id)
             else:
                 print("assignment already submitted " + assignment['name'])
-        else:
-            print("assignment already synced")
+        elif not is_synced:
+                update_task(assignment, item)
+
+        #     print("assignment already synced")
     todoist_api.commit()
-    print(todoist_api)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
@@ -180,9 +192,14 @@ def add_new_task(assignment, project_id):
     todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'],
-            priority=['todoist_task_priority']
+            priority=config['todoist_task_priority'],
+            labels=config['todoist_task_labels']
             )
-    print(todoist_api)
+            
+def update_task(assignment, item):
+    item.update(due={
+        'date': assignment['due_at']
+    })
 
 if __name__ == "__main__":
     main()
