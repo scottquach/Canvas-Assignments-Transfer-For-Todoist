@@ -1,3 +1,0 @@
-Replace THIS line with the Todoist API token. Remove trailing spaces
-Replace THIS line with the Canvas API token. Remove Trailing spaces
-Replace THIS line and lines AFTER with the course ID of the course you want assignments to trasfer. Remove trailing spaces
