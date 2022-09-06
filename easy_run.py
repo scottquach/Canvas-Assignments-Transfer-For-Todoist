@@ -39,22 +39,29 @@ def initialize_api():
     with open("config.json") as config_file:
         config = json.load(config_file);
     if (config['configured']) == 'no':
-        config['canvas_api_heading'] = "https://canvas.instructure.com";
+        config['canvas_api_heading'] = "https://canvas.instructure.com"
         print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
         custom = input(">") 
         if custom in no:
             print("Enter your custom Canvas URL: (example https://university.instructure.com)")
-            config['canvas_api_heading'] = input(">");
+            config['canvas_api_heading'] = input(">")
         print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
-        config['todoist_api_key'] = input(">");
+        config['todoist_api_key'] = input(">")
         print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
-        config['canvas_api_key'] = input(">");
+        config['canvas_api_key'] = input(">")
         print("Configure advanced options? Y/N (Default no)")
+        custom = input(">")
         if custom in yes:
             print("Enter any labels you would like assigned to the tasks, seperated by comma")
-            config['todoist_task_labels'] = input(">");
+            config['todoist_task_labels'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
-            config['todoist_task_priority'] = input(">");
+            config['todoist_task_priority'] = input(">")
+            print("Sync unsubmittable assignements (with no allowed attempts?) Y/N (Default yes)")
+            null_assignments = input(">")
+            if null_assignments in no:
+                config['sync_null_assignments'] = 'false'
+            else:
+                config['sync_null_assignments'] = 'true'
         else:
             config['todoist_task_labels'] = []
             config['todoist_task_priority'] = 1
@@ -153,7 +160,6 @@ def create_todoist_projects():
 def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment['course_id']]
-        assignment_name = assignment['name']
         project_id = todoist_project_dict[course_name]
 
         is_added = False
@@ -164,26 +170,25 @@ def transfer_assignments_to_todoist():
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
                 is_added = True
-                # print(assignment)
                 if (task['due'] and task['due']['date'] != assignment['due_at']):
                     is_synced = False
-                    # print(task)
-                    # print(assignment)
                     item = task
                     print("Updating assignment due date: " + assignment['name'] + " to " + str(assignment['due_at']))
-                    break;
-            # print(assignment)
+                    break
 
         if not is_added:
-            if (assignment['submission']['workflow_state'] == "unsubmitted"):
-                print("Adding assignment " + assignment['name'])
-                add_new_task(assignment, project_id)
+            if (assignment['submission']['workflow_state'] == "unsubmitted") and (config['sync_null_assignments'] == "false"):
+                if (assignment['allowed_attempts'] == -1):
+                    print("Ignoring unsubmittable assignment: " + assignment['name'])
+                    break
+                else:
+                    print("Adding assignment " + assignment['name'])
+                    add_new_task(assignment, project_id)
             else:
                 print("assignment already submitted " + assignment['name'])
         elif not is_synced:
                 update_task(assignment, item)
 
-        #     print("assignment already synced")
     todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
