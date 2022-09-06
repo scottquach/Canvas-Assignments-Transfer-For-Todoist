@@ -56,7 +56,7 @@ def initialize_api():
             config['todoist_task_labels'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = input(">")
-            print("Sync unsubmittable assignements (with no allowed attempts?) Y/N (Default yes)")
+            print("Sync unsubmittable/not_graded assignements? Y/N (Default yes)")
             null_assignments = input(">")
             if null_assignments in no:
                 config['sync_null_assignments'] = 'false'
@@ -83,7 +83,7 @@ def select_courses():
 
     response = requests.get(config['canvas_api_heading'] + '/api/v1/courses',
             headers=header, params=param)
-    if response.status_code ==401:
+    if response.status_code == 401:
         print('Unauthorized; Check API Key')
         exit()
 
@@ -166,22 +166,24 @@ def transfer_assignments_to_todoist():
         is_synced = True
         item = None
         for task in todoist_tasks:
+            if config['sync_null_assignments'] == "false":
+                if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
+                    print("Ignoring unsubmittable assignment: " + assignment['name'])
+                    is_added = True
+                    break
+
             if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
                 is_added = True
+              
                 if (task['due'] and task['due']['date'] != assignment['due_at']):
                     is_synced = False
                     item = task
                     print("Updating assignment due date: " + assignment['name'] + " to " + str(assignment['due_at']))
                     break
-
         if not is_added:
-            if (assignment['submission']['workflow_state'] == "unsubmitted") and (config['sync_null_assignments'] == "false"):
-                if (assignment['allowed_attempts'] == -1):
-                    print("Ignoring unsubmittable assignment: " + assignment['name'])
-                    break
-                else:
+            if assignment['submission']['workflow_state'] == "unsubmitted":
                     print("Adding assignment " + assignment['name'])
                     add_new_task(assignment, project_id)
             else:
