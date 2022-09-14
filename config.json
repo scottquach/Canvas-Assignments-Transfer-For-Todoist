@@ -6,6 +6,7 @@
 	"todoist_task_priority": "",
 	"todoist_task_labels": [""],
 	"todoist_task_priority": 4,
-	"courses": []
-	
+	"courses": [],
+	"sync_locked_assignments": "",
+	"sync_no_due_date_assignments": ""
 }

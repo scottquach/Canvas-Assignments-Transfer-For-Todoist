@@ -3,6 +3,7 @@ import re
 import json
 from todoist.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
+import datetime
 
 # Loaded configuration files
 config = {}
@@ -52,19 +53,35 @@ def initialize_api():
         print("Configure advanced options? Y/N (Default no)")
         custom = input(">")
         if custom in yes:
-            print("Enter any labels you would like assigned to the tasks, seperated by comma")
+            print("Enter any Label IDs that you would like assigned to the tasks, seperated by comma")
             config['todoist_task_labels'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = input(">")
-            print("Sync unsubmittable/not_graded assignements? Y/N (Default yes)")
+            print("Sync non submittable/not_graded assignments? Y/N (Default yes)")
             null_assignments = input(">")
             if null_assignments in no:
                 config['sync_null_assignments'] = 'false'
             else:
                 config['sync_null_assignments'] = 'true'
+            print("Sync locked (as of now) assignments? Y/N (Default yes)")
+            locked_assignments = input(">")
+            if locked_assignments in no:
+                config['sync_locked_assignments'] = 'false'
+            else:
+                config['sync_locked_assignments'] = 'true'
+            print("Sync assignments with no due date? Y/N (Default yes)")
+            no_due_date_assignments = input(">")
+            if no_due_date_assignments in no:
+                config['sync_no_due_date_assignments'] = 'false'
+            else:
+                config['sync_no_due_date_assignments'] = 'true'
+            
         else:
             config['todoist_task_labels'] = []
             config['todoist_task_priority'] = 1
+            config['sync_null_assignments'] = 'true'
+            config['sync_locked_assignments'] = 'true'
+            config['sync_no_due_date_assignments'] = 'true'
         config['configured'] = 'yes'
         with open("config.json", "w") as outfile:
             json.dump(config, outfile)
@@ -171,7 +188,15 @@ def transfer_assignments_to_todoist():
                     print("Ignoring unsubmittable assignment: " + assignment['name'])
                     is_added = True
                     break
-
+            if assignment['unlock_at'] != None and config['sync_locked_assignments'] == "false":
+                if assignment['unlock_at'] > datetime.datetime.now().isoformat():
+                    print("Ignoring assignment that is not unlocked: " + assignment['name'])
+                    is_added = True
+                    break
+            if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == "false":
+                print("Ignoring assignment with no due date: " + assignment['name'])
+                is_added = True
+                break
             if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
                 print("Assignment already synced: " + assignment['name'])
@@ -194,7 +219,7 @@ def transfer_assignments_to_todoist():
     todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
-# project coreesponding to project_id
+# project corresponding to project_id
 def add_new_task(assignment, project_id):
     todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
