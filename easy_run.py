@@ -14,8 +14,6 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
-no = ['n','N', 'no', 'NO']
-yes = ['y','Y','YES','yes']
 
 def main():
     print("  ###################################################")
@@ -32,66 +30,73 @@ def main():
     transfer_assignments_to_todoist()
     print("Done!")
 
+#Function for Yes/No response prompts during setup
+def yes_no(question: str) -> bool:
+    reply = None
+    while reply not in ("y", "n"):
+        reply = input(f"{question} (y/n): ").lower()
+    return (reply == "y")
+
 # Makes sure that the user has their api keys and canvas url in the config.json
 def initialize_api():
     global config
     global todoist_api
 
-    with open("config.json") as config_file:
-        config = json.load(config_file);
-    if (config['configured']) != True:
-        config['canvas_api_heading'] = "https://canvas.instructure.com"
-        print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
-        custom = input(">") 
-        if custom in no:
-            print("Enter your custom Canvas URL: (example https://university.instructure.com)")
-            config['canvas_api_heading'] = input(">")
-        print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
-        config['todoist_api_key'] = input(">")
-        print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
-        config['canvas_api_key'] = input(">")
-        print("Configure advanced options? Y/N (Default no)")
-        custom = input(">")
-        if custom in yes:
-            print("Enter any Label IDs that you would like assigned to the tasks, separated by comma")
-            config['todoist_task_label_id'] = input(">")
-            print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
-            config['todoist_task_priority'] = int(input(">"))
-            print("Sync non submittable/not_graded assignments? Y/N (Default yes)")
-            null_assignments = input(">")
-            if null_assignments in no:
-                config['sync_null_assignments'] = False
-            else:
-                config['sync_null_assignments'] = True
-            print("Sync locked (as of now) assignments? Y/N (Default yes)")
-            locked_assignments = input(">")
-            if locked_assignments in no:
-                config['sync_locked_assignments'] = False
-            else:
-                config['sync_locked_assignments'] = True
-            print("Sync assignments with no due date? Y/N (Default yes)")
-            no_due_date_assignments = input(">")
-            if no_due_date_assignments in no:
-                config['sync_no_due_date_assignments'] = False
-            else:
-                config['sync_no_due_date_assignments'] = True
-            
-        else:
-            config['todoist_task_label_id'] = []
-            config['todoist_task_priority'] = 1
-            config['sync_null_assignments'] = True
-            config['sync_locked_assignments'] = True
-            config['sync_no_due_date_assignments'] = True
-        config['configured'] = True
-        with open("config.json", "w") as outfile:
-            json.dump(config, outfile)
-
+    try:
+        with open("config.json") as config_file:
+            config = json.load(config_file)
+    except FileNotFoundError:
+        print("File not Found, running Initial Configuration")
+        initial_config()
 
     #create todoist_api object globally
     todoist_api = TodoistAPI(config['todoist_api_key'].strip())
     todoist_api.reset_state()
     todoist_api.sync()
     header.update({"Authorization":"Bearer " + config['canvas_api_key'].strip()})
+
+def initial_config():
+    print("Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done.")
+    config['todoist_api_key'] = input(">")
+    print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
+    config['canvas_api_key'] = input(">")
+    defaults = yes_no("Use default options? (enter no for advanced config)")
+    if defaults == True:
+        config['canvas_api_heading'] = "https://canvas.instructure.com"
+        config['todoist_task_priority'] = 1
+        config['todoist_task_label_id'] = []
+        config['sync_null_assignments'] = True
+        config['sync_locked_assignments'] = True
+        config['sync_no_due_date_assignments'] = True
+    if defaults == False:   
+        custom_url = yes_no("Use default Canvas URL? (https://canvas.instructure.com)")
+        if custom_url == True:
+            config['canvas_api_heading'] = "https://canvas.instructure.com"
+        if custom_url == False:
+            print("Enter your custom Canvas URL: (example https://university.instructure.com)")
+            config['canvas_api_heading'] = input(">")
+        advance_setup = yes_no("Configure Advanced Options? (enter no for default config)")
+        if advance_setup == True:
+            print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
+            config['todoist_task_priority'] = int(input(">"))
+            print("Enter any Label IDs that you would like assigned to the tasks, separated by comma (pull using todoist_labels.py)")
+            config['todoist_task_label_id'] = str("["+input(">")+"]")
+            null_assignments = yes_no("Sync not graded/not submittable assignments?")
+            config['sync_null_assignments'] = null_assignments
+            locked_assignments = yes_no("Sync locked assignments?")
+            config['sync_locked_assignments'] = locked_assignments
+            no_due_date_assignments = yes_no("Sync assignments with no due date?")
+            config['sync_no_due_date_assignments'] = no_due_date_assignments
+            
+        else:
+            config['todoist_task_priority'] = 1
+            config['todoist_task_label_id'] = []
+            config['sync_null_assignments'] = True
+            config['sync_locked_assignments'] = True
+            config['sync_no_due_date_assignments'] = True
+    config['courses'] = []
+    with open("config.json", "w") as outfile:
+        json.dump(config, outfile)
 
 # Allows the user to select the courses that they want to transfer while generating a dictionary
 # that has course ids as the keys and their names as the values
@@ -183,7 +188,7 @@ def transfer_assignments_to_todoist():
         for task in todoist_tasks:
             if config['sync_null_assignments'] == False:
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
-                    print("Ignoring ungraded/submittable assignment: " + course_name + ": " + assignment['name'])
+                    print("Ignoring ungraded/non-submittable assignment: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
             if assignment['unlock_at'] != None and config['sync_locked_assignments'] == False and assignment['unlock_at'] > (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat():
