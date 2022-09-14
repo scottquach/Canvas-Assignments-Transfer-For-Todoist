@@ -32,7 +32,7 @@ def main():
     transfer_assignments_to_todoist()
     print("Done!")
 
-# Makes sure that the user has their api keys set up and sets api variables
+# Makes sure that the user has their api keys set up and sets api variables correctly
 def initialize_api():
     global config
     global todoist_api
