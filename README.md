@@ -39,5 +39,9 @@ If you don't want to use easy run for whatever reason, you can edit the `api_key
   - Assignments will be checked for overlap, so running the script multiple times won't re-add assignments that already exist in Todoist.
 - Assignments will be added to automatically generated projects in Todoist. The project names will match with the official course names pulled from Canvas
 
+##Known Limitations
+**With the exception of due date, the script will not update or change a task that already exists in Todoist. So, if a teacher deletes or modifies an assignment, it will not retroactively remove from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
+
+
 ## Contributing
 I'm still active in the community so feel free to submit a PR for any contributions you'd like to make to the project!
