@@ -39,7 +39,7 @@ def initialize_api():
 
     with open("config.json") as config_file:
         config = json.load(config_file);
-    if (config['configured']) == 'no':
+    if (config['configured']) != True:
         config['canvas_api_heading'] = "https://canvas.instructure.com"
         print("Use default Canvas URL? (https://canvas.instructure.com) Y/N (Enter for default)")
         custom = input(">") 
@@ -56,33 +56,33 @@ def initialize_api():
             print("Enter any Label IDs that you would like assigned to the tasks, separated by comma")
             config['todoist_task_label_id'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
-            config['todoist_task_priority'] = input(">")
+            config['todoist_task_priority'] = int(input(">"))
             print("Sync non submittable/not_graded assignments? Y/N (Default yes)")
             null_assignments = input(">")
             if null_assignments in no:
-                config['sync_null_assignments'] = 'false'
+                config['sync_null_assignments'] = False
             else:
-                config['sync_null_assignments'] = 'true'
+                config['sync_null_assignments'] = True
             print("Sync locked (as of now) assignments? Y/N (Default yes)")
             locked_assignments = input(">")
             if locked_assignments in no:
-                config['sync_locked_assignments'] = 'false'
+                config['sync_locked_assignments'] = False
             else:
-                config['sync_locked_assignments'] = 'true'
+                config['sync_locked_assignments'] = True
             print("Sync assignments with no due date? Y/N (Default yes)")
             no_due_date_assignments = input(">")
             if no_due_date_assignments in no:
-                config['sync_no_due_date_assignments'] = 'false'
+                config['sync_no_due_date_assignments'] = False
             else:
-                config['sync_no_due_date_assignments'] = 'true'
+                config['sync_no_due_date_assignments'] = True
             
         else:
             config['todoist_task_label_id'] = []
             config['todoist_task_priority'] = 1
-            config['sync_null_assignments'] = 'true'
-            config['sync_locked_assignments'] = 'true'
-            config['sync_no_due_date_assignments'] = 'true'
-        config['configured'] = 'yes'
+            config['sync_null_assignments'] = True
+            config['sync_locked_assignments'] = True
+            config['sync_no_due_date_assignments'] = True
+        config['configured'] = True
         with open("config.json", "w") as outfile:
             json.dump(config, outfile)
 
@@ -181,21 +181,21 @@ def transfer_assignments_to_todoist():
         is_synced = True
         item = None
         for task in todoist_tasks:
-            if config['sync_null_assignments'] == "false":
+            if config['sync_null_assignments'] == False:
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
                     print("Ignoring ungraded/submittable assignment: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
-            if assignment['unlock_at'] != None and config['sync_locked_assignments'] == "false":
+            if assignment['unlock_at'] != None and config['sync_locked_assignments'] == False:
                 if assignment['unlock_at'] > datetime.datetime.now().isoformat():
                     print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
-            if assignment['locked_for_user'] == 'true' and config['sync_locked_assignments'] == "false":
+            if assignment['locked_for_user'] == True and config['sync_locked_assignments'] == False:
                 print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
                 is_added = True
                 break
-            if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == "false":
+            if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == False:
                 print("Ignoring assignment with no due date: " + course_name + ": " + assignment['name'])
                 is_added = True
                 break
