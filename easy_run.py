@@ -187,14 +187,14 @@ def transfer_assignments_to_todoist():
                     is_added = True
                     break
             if assignment['unlock_at'] != None and config['sync_locked_assignments'] == False:
-                if assignment['unlock_at'] > datetime.datetime.now().isoformat():
-                    print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'])
+                if assignment['unlock_at'] > (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat():
+                    print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
                     is_added = True
                     break
-            if assignment['locked_for_user'] == True and config['sync_locked_assignments'] == False:
-                print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
-                is_added = True
-                break
+            # if assignment['locked_for_user'] == True and config['sync_locked_assignments'] == False:
+                # print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
+                # is_added = True
+                # break
             if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == False:
                 print("Ignoring assignment with no due date: " + course_name + ": " + assignment['name'])
                 is_added = True
