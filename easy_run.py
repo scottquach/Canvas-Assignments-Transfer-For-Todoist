@@ -5,7 +5,7 @@ from todoist.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 import datetime
 
-# Loaded configuration files
+# Loaded configuration files and creates a list of course_ids
 config = {}
 header = {}
 param = {'per_page': '100', 'include':'submission'}
@@ -32,7 +32,7 @@ def main():
     transfer_assignments_to_todoist()
     print("Done!")
 
-# Makes sure that the user has their api keys set up and sets api variables correctly
+# Makes sure that the user has their api keys and canvas url in the config.json
 def initialize_api():
     global config
     global todoist_api
@@ -53,7 +53,7 @@ def initialize_api():
         print("Configure advanced options? Y/N (Default no)")
         custom = input(">")
         if custom in yes:
-            print("Enter any Label IDs that you would like assigned to the tasks, seperated by comma")
+            print("Enter any Label IDs that you would like assigned to the tasks, separated by comma")
             config['todoist_task_labels'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = input(">")
