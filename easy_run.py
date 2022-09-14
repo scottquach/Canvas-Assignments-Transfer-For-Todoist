@@ -54,7 +54,7 @@ def initialize_api():
         custom = input(">")
         if custom in yes:
             print("Enter any Label IDs that you would like assigned to the tasks, separated by comma")
-            config['todoist_task_labels'] = input(">")
+            config['todoist_task_label_id'] = input(">")
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = input(">")
             print("Sync non submittable/not_graded assignments? Y/N (Default yes)")
@@ -77,7 +77,7 @@ def initialize_api():
                 config['sync_no_due_date_assignments'] = 'true'
             
         else:
-            config['todoist_task_labels'] = []
+            config['todoist_task_label_id'] = []
             config['todoist_task_priority'] = 1
             config['sync_null_assignments'] = 'true'
             config['sync_locked_assignments'] = 'true'
@@ -122,7 +122,7 @@ def select_courses():
         if course.get('name') != None:
             print(str(i) + ") " + courses_id_name_dict[course.get('id', "")]  + ': ' + str(course.get('id', "")))
         i+=1
-    print("\nEnter the courses you would like to add to todoist by entering the numbers of the items you would like to select. Separate numbers with spaces")
+    print("\nEnter the courses you would like to add to Todoist by entering the numbers of the items you would like to select. Separate numbers with spaces.")
     my_input = input(">")
     input_array = my_input.split()
     for item in input_array:
@@ -157,23 +157,21 @@ def load_todoist_projects():
     projects = todoist_api.state['projects']
     for project in projects:
         todoist_project_dict[project['name']] = project['id']
-    # print(todoist_project_dict)
 
 # Checks to see if the user has a project matching their course names, if there
-# isn't a new project will be created
+# is not a new project will be created
 def create_todoist_projects():
     for course_id in course_ids:
         if courses_id_name_dict[course_id] not in todoist_project_dict:
             project = todoist_api.projects.add(courses_id_name_dict[course_id])
             todoist_api.commit();
             todoist_api.sync()
-
             todoist_project_dict[project['name']] = project['id']
         else:
-            print("the key was in dict, don't create project")
+            print("Project " + courses_id_name_dict[course_id] + " exists")
 
 # Transfers over assignments from canvas over to Todoist, the method Checks
-# to make sure the assignment has not already been trasnfered to prevent overlap
+# to make sure the assignment has not already been transferred to prevent overlap
 def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment['course_id']]
@@ -185,34 +183,38 @@ def transfer_assignments_to_todoist():
         for task in todoist_tasks:
             if config['sync_null_assignments'] == "false":
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
-                    print("Ignoring unsubmittable assignment: " + assignment['name'])
+                    print("Ignoring ungraded/submittable assignment: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
             if assignment['unlock_at'] != None and config['sync_locked_assignments'] == "false":
                 if assignment['unlock_at'] > datetime.datetime.now().isoformat():
-                    print("Ignoring assignment that is not unlocked: " + assignment['name'])
+                    print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
+            if assignment['locked_for_user'] == 'true' and config['sync_locked_assignments'] == "false":
+                print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
+                is_added = True
+                break
             if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == "false":
-                print("Ignoring assignment with no due date: " + assignment['name'])
+                print("Ignoring assignment with no due date: " + course_name + ": " + assignment['name'])
                 is_added = True
                 break
             if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
             task['project_id'] == project_id:
-                print("Assignment already synced: " + assignment['name'])
+                print("Assignment already synced: " + course_name + ": " + assignment['name'])
                 is_added = True
               
                 if (task['due'] and task['due']['date'] != assignment['due_at']):
                     is_synced = False
                     item = task
-                    print("Updating assignment due date: " + assignment['name'] + " to " + str(assignment['due_at']))
+                    print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
                     break
         if not is_added:
             if assignment['submission']['workflow_state'] == "unsubmitted":
-                    print("Adding assignment " + assignment['name'])
+                    print("Adding assignment " + course_name + ": " + assignment['name'])
                     add_new_task(assignment, project_id)
             else:
-                print("assignment already submitted " + assignment['name'])
+                print("assignment already submitted " + course_name + ": " + assignment['name'])
         elif not is_synced:
                 update_task(assignment, item)
 
@@ -225,7 +227,7 @@ def add_new_task(assignment, project_id):
             project_id=project_id,
             date_string=assignment['due_at'],
             priority=config['todoist_task_priority'],
-            labels=config['todoist_task_labels']
+            labels=config['todoist_task_label_id']
             )
             
 def update_task(assignment, item):
