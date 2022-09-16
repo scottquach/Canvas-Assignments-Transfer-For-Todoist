@@ -19,15 +19,19 @@ Easy run allows all configuration to be done inside of the program, avoiding the
 
 ##FAQ
 Q: Why are Priority numbers different?
+
 A: The Todoist API Priority numbers go from 1 (Default) to 4 (Very Urgent), which is the opposite as the UI (https://developer.todoist.com/rest/v1/#tasks)
 
 Q: My Labels are not working
+
 A: You must enter the Label ID numbers, not the Label names. Use the todoist_labels.py script to pull your labels and identify their ids.
 
 Q: What are null/unsubmittable assignments?
+
 A: Teachers can set submission method for an assignment to "none" or "not graded". This filters out those assignments.
 
 Q: What are locked assignments?
+
 A: Teachers can lock assignments so they cannot be viewed or done. These locks can be because a module is not unlocked, or they can be set to unlock at a certain date. If the setting to not sync locked assignments is enabled, any assignment which is locked (or is not set to unlock within the next 24 hours) will not be synced.
 
 ## Contributing
