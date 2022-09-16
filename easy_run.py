@@ -214,7 +214,7 @@ def transfer_assignments_to_todoist():
                     print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
                     break
         if not is_added:
-            if assignment['submission']['workflow_state'] == "unsubmitted":
+            if assignment['submission']['submitted_at'] == None or assignment['submission']['workflow_state'] == "unsubmitted" or assignment['submission']['attempt'] == None:
                     print("Adding assignment " + course_name + ": " + assignment['name'])
                     add_new_task(assignment, project_id)
             else:
