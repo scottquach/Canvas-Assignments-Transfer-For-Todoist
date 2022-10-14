@@ -185,6 +185,7 @@ def transfer_assignments_to_todoist():
         is_added = False
         is_synced = True
         item = None
+
         for task in todoist_tasks:
             if config['sync_null_assignments'] == False:
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
@@ -207,12 +208,11 @@ def transfer_assignments_to_todoist():
             task['project_id'] == project_id:
                 print("Assignment already synced: " + course_name + ": " + assignment['name'])
                 is_added = True
-              
                 if (task['due'] and task['due']['date'] != assignment['due_at']):
                     is_synced = False
                     item = task
-                    print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
                     break
+
         if not is_added:
             if assignment['submission']['submitted_at'] == None or assignment['submission']['workflow_state'] == "unsubmitted" or assignment['submission']['attempt'] == None:
                     print("Adding assignment " + course_name + ": " + assignment['name'])
@@ -220,8 +220,9 @@ def transfer_assignments_to_todoist():
             else:
                 print("assignment already submitted " + course_name + ": " + assignment['name'])
         elif not is_synced:
-                update_task(assignment, item)
-
+            print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
+            update_task(assignment, item)
+            
     todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
