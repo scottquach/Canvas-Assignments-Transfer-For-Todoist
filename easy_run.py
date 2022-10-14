@@ -187,11 +187,25 @@ def transfer_assignments_to_todoist():
         item = None
 
         for task in todoist_tasks:
+            if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
+            task['project_id'] == project_id:
+                is_added = True
+                if (task['due'] and task['due']['date'] != assignment['due_at']):
+                    is_synced = False
+                    item = task
+                    print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
+                    break
+                else:
+                    print("Assignment already synced: " + course_name + ": " + assignment['name'])
             if config['sync_null_assignments'] == False:
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
                     print("Ignoring ungraded/non-submittable assignment: " + course_name + ": " + assignment['name'])
                     is_added = True
                     break
+            if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == False:
+                print("Ignoring assignment with no due date: " + course_name + ": " + assignment['name'])
+                is_added = True
+                break
             if assignment['unlock_at'] != None and config['sync_locked_assignments'] == False and assignment['unlock_at'] > (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat():
                 print("Ignoring assignment that is not yet unlocked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
                 is_added = True
@@ -200,18 +214,6 @@ def transfer_assignments_to_todoist():
                 print("Ignoring assignment that is locked: " + course_name + ": " + assignment['name'] + ": " + assignment['lock_explanation'])
                 is_added = True
                 break
-            if assignment['due_at'] == None and config['sync_no_due_date_assignments'] == False:
-                print("Ignoring assignment with no due date: " + course_name + ": " + assignment['name'])
-                is_added = True
-                break
-            if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
-            task['project_id'] == project_id:
-                print("Assignment already synced: " + course_name + ": " + assignment['name'])
-                is_added = True
-                if (task['due'] and task['due']['date'] != assignment['due_at']):
-                    is_synced = False
-                    item = task
-                    break
 
         if not is_added:
             if assignment['submission']['submitted_at'] == None or assignment['submission']['workflow_state'] == "unsubmitted" or assignment['submission']['attempt'] == None:
@@ -220,9 +222,8 @@ def transfer_assignments_to_todoist():
             else:
                 print("assignment already submitted " + course_name + ": " + assignment['name'])
         elif not is_synced:
-            print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
             update_task(assignment, item)
-            
+
     todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
