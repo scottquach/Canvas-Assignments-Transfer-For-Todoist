@@ -10,10 +10,11 @@ This project provides you with an easy way to transfer all of your assignments f
 ### Easy Run
 Easy run allows all configuration to be done inside of the program, avoiding the hassle of editing the api_keys file directly. Just install the dependencies and follow the instructions on screen.
 - Install required packages with `pip install -r requirements.txt`
-- Run `python easy_run.py`
+- OPTIONAL: If you want to assign labels to tasks, create them in Todoist, then run "get_todoist_labels" and copy down the label IDs you would like to have assigned to the tasks
+- Run `python easy_run.py` and follow up the settings
 
 ##Known Limitations
-**With the exception of due date, the script will not update or change a task that already exists in Todoist. So, if a teacher deletes or modifies an assignment, it will not retroactively remove from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
+**With the exception of due date, the script will not update or change a task that already exists in Todoist. So, if a teacher deletes or modifies an assignment, it will not retroactively remove from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name. Note that due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
 
 **Every teacher uses Canvas differently. My scripts have several hacks to handle weird things my different teachers would do (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
 
@@ -24,7 +25,7 @@ A: The Todoist API Priority numbers go from 1 (Default) to 4 (Very Urgent), whic
 
 Q: My Labels are not working
 
-A: You must enter the Label ID numbers, not the Label names. Use the todoist_labels.py script to pull your labels and identify their ids.
+A: You must enter the Label ID numbers, not the Label names. Use the get_todoist_labels.py script to pull your labels and identify their ids.
 
 Q: What are null/unsubmittable assignments?
 
