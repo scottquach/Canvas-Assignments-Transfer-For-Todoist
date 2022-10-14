@@ -10,7 +10,7 @@ This project provides you with an easy way to transfer all of your assignments f
 ### Easy Run
 Easy run allows all configuration to be done inside of the program, avoiding the hassle of editing the api_keys file directly. Just install the dependencies and follow the instructions on screen.
 - Install required packages with `pip install -r requirements.txt`
-- OPTIONAL: If you want to assign labels to tasks, create them in Todoist, then run "get_todoist_labels" and copy down the label IDs you would like to have assigned to the tasks
+- OPTIONAL: If you want to assign labels to tasks, create them in Todoist, then run `python get_todoist_labels` and copy down the label IDs you would like to have assigned to the tasks
 - Run `python easy_run.py` and follow up the settings
 
 ##Known Limitations
