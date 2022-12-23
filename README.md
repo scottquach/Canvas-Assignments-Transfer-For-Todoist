@@ -1,4 +1,4 @@
-# Canvas-Assignments-Transfer-For-Todoist
+# Canvas-Transfer-For-Todoist
 not created by, affiliated with, or supported by Doist
 
 Transferring assignments from your student Canvas account to your Todoist account couldn't be easier.
