@@ -58,7 +58,7 @@ def initial_config():
     config['todoist_api_key'] = input(">")
     print("Your Canvas API key has not been configured. To add an API token, go to your Canvas settings and click on New Access Token under Approved Integrations. Copy the token and paste below when you are done.")
     config['canvas_api_key'] = input(">")
-    defaults = yes_no("Use default options? (enter no for advanced config)")
+    defaults = yes_no("Use default options? (enter n for advanced config)")
     if defaults == True:
         config['canvas_api_heading'] = "https://canvas.instructure.com"
         config['todoist_task_priority'] = 1
@@ -73,12 +73,13 @@ def initial_config():
         if custom_url == False:
             print("Enter your custom Canvas URL: (example https://university.instructure.com)")
             config['canvas_api_heading'] = input(">")
-        advance_setup = yes_no("Configure Advanced Options? (enter no for default config)")
+        advance_setup = yes_no("Configure Advanced Options (change priority, labels, or sync null/locked assignments?) (enter n for default config)")
         if advance_setup == True:
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = int(input(">"))
-            print("Enter any Label names that you would like assigned to the tasks, separated by comma)")
-            config['todoist_task_labels'] = str("["+input(">")+"]")
+            print("Enter any Label names that you would like assigned to the tasks, separated by space)")
+            config_input = input(">")
+            config['todoist_task_labels'] = config_input.split()
             null_assignments = yes_no("Sync not graded/not submittable assignments?")
             config['sync_null_assignments'] = null_assignments
             locked_assignments = yes_no("Sync locked assignments?")
