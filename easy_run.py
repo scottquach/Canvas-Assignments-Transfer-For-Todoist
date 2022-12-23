@@ -178,19 +178,19 @@ def create_todoist_projects():
 def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment['course_id']]
-        assignment_name = assignment['name']
         project_id = todoist_project_dict[course_name]
 
         is_added = False
-        is_synced = True
+        is_synced = False
         item = None
 
         for task in todoist_tasks:
-            if task.content == (assignment_name + ' Due') and \
+            # print(task.content)
+            if task.content == '[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due' and \
             task.project_id == project_id:
                 print(f"Assignment already synced: {assignment['name']}")
                 is_added = True
-                if (task['due'] and task['due']['date'] != assignment['due_at']):
+                if (task.due != assignment['due_at'] and assignment['due_at'] != None):
                     is_synced = False
                     item = task
                     print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
@@ -220,8 +220,9 @@ def transfer_assignments_to_todoist():
                     print("Adding assignment " + course_name + ": " + assignment['name'])
                     add_new_task(assignment, project_id)
             else:
-                print(f"assignment already submitted {assignment['name']}")
+                print(f"assignment already submitted {assignment['name'] + course_name}")
         elif not is_synced:
+            print(item)
             update_task(assignment, item)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
@@ -236,10 +237,12 @@ def add_new_task(assignment, project_id):
 
             )
             
-def update_task(assignment, item):
-    item.update(due={
-        'date': assignment['due_at']
-    })
+def update_task(assignment,item):
+    try:
+        is_success = todoist_api.update_task(task_id=item.id, due_datetime=assignment['due_at'])
+        print(is_success)
+    except Exception as error:
+        print(error)
 
 if __name__ == "__main__":
     main()
