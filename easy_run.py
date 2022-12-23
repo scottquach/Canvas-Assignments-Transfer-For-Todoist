@@ -1,7 +1,7 @@
 import requests
 import re
 import json
-from todoist.api import TodoistAPI
+from todoist_api_python.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 import datetime
 
@@ -51,8 +51,6 @@ def initialize_api():
 
     #create todoist_api object globally
     todoist_api = TodoistAPI(config['todoist_api_key'].strip())
-    todoist_api.reset_state()
-    todoist_api.sync()
     header.update({"Authorization":"Bearer " + config['canvas_api_key'].strip()})
 
 def initial_config():
@@ -64,7 +62,7 @@ def initial_config():
     if defaults == True:
         config['canvas_api_heading'] = "https://canvas.instructure.com"
         config['todoist_task_priority'] = 1
-        config['todoist_task_label_id'] = []
+        config['todoist_task_labels'] = []
         config['sync_null_assignments'] = True
         config['sync_locked_assignments'] = True
         config['sync_no_due_date_assignments'] = True
@@ -79,8 +77,8 @@ def initial_config():
         if advance_setup == True:
             print("Specify the task priority (1=Priority 4, 2=Priority 3, 3=Priority 2, 4=Priority 1. (Default Priority 4)")
             config['todoist_task_priority'] = int(input(">"))
-            print("Enter any Label IDs that you would like assigned to the tasks, separated by comma (pull using todoist_labels.py)")
-            config['todoist_task_label_id'] = str("["+input(">")+"]")
+            print("Enter any Label names that you would like assigned to the tasks, separated by comma)")
+            config['todoist_task_labels'] = str("["+input(">")+"]")
             null_assignments = yes_no("Sync not graded/not submittable assignments?")
             config['sync_null_assignments'] = null_assignments
             locked_assignments = yes_no("Sync locked assignments?")
@@ -90,7 +88,7 @@ def initial_config():
             
         else:
             config['todoist_task_priority'] = 1
-            config['todoist_task_label_id'] = []
+            config['todoist_task_labels'] = []
             config['sync_null_assignments'] = True
             config['sync_locked_assignments'] = True
             config['sync_no_due_date_assignments'] = True
@@ -105,7 +103,7 @@ def select_courses():
 
     response = requests.get(config['canvas_api_heading'] + '/api/v1/courses',
             headers=header, params=param)
-    if response.status_code == 401:
+    if response.status_code ==401:
         print('Unauthorized; Check API Key')
         exit()
 
@@ -153,33 +151,33 @@ def load_assignments():
 
 # Loads all user tasks from Todoist
 def load_todoist_tasks():
-    tasks = todoist_api.state['items']
+    tasks = todoist_api.get_tasks()
     for task in tasks:
         todoist_tasks.append(task)
 
 # Loads all user projects from Todoist
 def load_todoist_projects():
-    projects = todoist_api.state['projects']
+    projects = todoist_api.get_projects()
     for project in projects:
-        todoist_project_dict[project['name']] = project['id']
+        todoist_project_dict[project.name] = project.id
 
 # Checks to see if the user has a project matching their course names, if there
 # is not a new project will be created
 def create_todoist_projects():
     for course_id in course_ids:
         if courses_id_name_dict[course_id] not in todoist_project_dict:
-            project = todoist_api.projects.add(courses_id_name_dict[course_id])
-            todoist_api.commit();
-            todoist_api.sync()
-            todoist_project_dict[project['name']] = project['id']
+            project = todoist_api.add_project(courses_id_name_dict[course_id])
+
+            todoist_project_dict[project.name] = project.id
         else:
-            print("Project " + courses_id_name_dict[course_id] + " exists")
+            print("Project " + courses_id_name_dict[course_id] + " already exists")
 
 # Transfers over assignments from canvas over to Todoist, the method Checks
 # to make sure the assignment has not already been transferred to prevent overlap
 def transfer_assignments_to_todoist():
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment['course_id']]
+        assignment_name = assignment['name']
         project_id = todoist_project_dict[course_name]
 
         is_added = False
@@ -187,8 +185,9 @@ def transfer_assignments_to_todoist():
         item = None
 
         for task in todoist_tasks:
-            if task['content'] == ('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due') and \
-            task['project_id'] == project_id:
+            if task.content == (assignment_name + ' Due') and \
+            task.project_id == project_id:
+                print(f"Assignment already synced: {assignment['name']}")
                 is_added = True
                 if (task['due'] and task['due']['date'] != assignment['due_at']):
                     is_synced = False
@@ -220,20 +219,20 @@ def transfer_assignments_to_todoist():
                     print("Adding assignment " + course_name + ": " + assignment['name'])
                     add_new_task(assignment, project_id)
             else:
-                print("assignment already submitted " + course_name + ": " + assignment['name'])
+                print(f"assignment already submitted {assignment['name']}")
         elif not is_synced:
             update_task(assignment, item)
-
-    todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project corresponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_item('[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
+    todoist_api.add_task(
+            content='[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due',
             project_id=project_id,
-            date_string=assignment['due_at'],
-            priority=config['todoist_task_priority'],
-            labels=config['todoist_task_label_id']
+            due_datetime=assignment['due_at'],
+            labels=config['todoist_task_labels'],
+            priority=config['todoist_task_priority']
+
             )
             
 def update_task(assignment, item):
