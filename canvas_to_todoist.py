@@ -1,6 +1,6 @@
 import requests
 import json
-from todoist.api import TodoistAPI
+from todoist_api_python.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 from retrieve_canvas_course_ids import load_courses
 
@@ -10,8 +10,6 @@ with open("api_keys.txt") as api_file:
 #Initialize TodoistAPI
 todoist_api_token = keys[0].strip()
 todoist_api = TodoistAPI(todoist_api_token)
-todoist_api.reset_state()
-todoist_api.sync()
 
 canvas_api_heading = 'https://canvas.instructure.com'
 canvas_token = keys[1].strip()
@@ -33,24 +31,27 @@ todoist_project_dict = {}
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
     for course_id in course_ids:
-        response = requests.get(canvas_api_heading + '/api/v1/courses/' +
-        str(course_id) + '/assignments', headers=header,
-        params=param)
+        response = requests.get(
+            f"{canvas_api_heading}/api/v1/courses/{str(course_id)}/assignments",
+            headers=header,
+            params=param
+        )
 
         for assignment in response.json():
             assignments.append(assignment)
 
 # Loads all user tasks from Todoist
 def load_todoist_tasks():
-    tasks = todoist_api.state['items']
+    tasks = todoist_api.get_tasks()
     for task in tasks:
         todoist_tasks.append(task)
+    # print(todoist_tasks)
 
 # Loads all user projects from Todoist
 def load_todoist_projects():
-    projects = todoist_api.state['projects']
+    projects = todoist_api.get_projects()
     for project in projects:
-        todoist_project_dict[project['name']] = project['id']
+        todoist_project_dict[project.name] = project.id
     # print(todoist_project_dict)
 
 # Checks to see if the user has a project matching their course names, if there
@@ -58,13 +59,11 @@ def load_todoist_projects():
 def create_todoist_projects():
     for course_id in course_ids:
         if courses_id_name_dict[course_id] not in todoist_project_dict:
-            project = todoist_api.projects.add(courses_id_name_dict[course_id])
-            todoist_api.commit();
-            todoist_api.sync()
+            project = todoist_api.add_project(courses_id_name_dict[course_id])
 
-            todoist_project_dict[project['name']] = project['id']
+            todoist_project_dict[project.name] = project.id
         else:
-            print("the key was in dict, don't create project")
+            print("The key is in todoist_project_dict, don't create project")
 
 # Transfers over assignments from canvas over to Todoist, the method Checks
 # to make sure the assignment has not already been trasnfered to prevent overlap
@@ -76,25 +75,24 @@ def transfer_assignments_to_todoist():
 
         is_synced = False
         for task in todoist_tasks:
-            if task['content'] == (assignment_name + ' Due') and \
-            task['project_id'] == project_id:
-                print("Assignment already synced: " + assignment['name'])
+            if task.content == (assignment_name + ' Due') and \
+            task.project_id == project_id:
+                print(f"Assignment already synced: {assignment['name']}")
                 is_synced = True
 
         if not is_synced:
-            if assignment['submission']['submitted_at'] == None:
-                print("Adding assignment " + assignment['name'])
+            if assignment['submission']['submitted_at'] is None:
+                print(f"Adding assignment {assignment['name']}")
                 add_new_task(assignment, project_id)
             else:
-                print("assignment already submitted " + assignment['name'])
+                print(f"assignment already submitted {assignment['name']}")
         else:
             print("assignment already synced")
-    todoist_api.commit()
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project coreesponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_item(assignment['name'] + ' Due',
+    todoist_api.add_task(assignment['name'] + ' Due',
             project_id=project_id,
             date_string=assignment['due_at'])
 
