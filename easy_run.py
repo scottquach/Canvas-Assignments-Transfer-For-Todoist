@@ -181,22 +181,22 @@ def transfer_assignments_to_todoist():
         project_id = todoist_project_dict[course_name]
 
         is_added = False
-        is_synced = False
-        item = None
+        is_synced = True
 
         for task in todoist_tasks:
             # print(task.content)
             if task.content == '[' + assignment['name'] + '](' + assignment['html_url'] + ')' + ' Due' and \
             task.project_id == project_id:
-                print(f"Assignment already synced: {assignment['name']}")
                 is_added = True
-                if (task.due != assignment['due_at'] and assignment['due_at'] != None):
+                if (task.due.datetime != assignment['due_at'] and assignment['due_at'] != None):
+                    # print(task.due.datetime)
+                    # print(assignment['due_at'])
                     is_synced = False
-                    item = task
                     print("Updating assignment due date: " + course_name + ": " + assignment['name'] + " to " + str(assignment['due_at']))
+
                     break
                 else:
-                    print("Assignment already synced: " + course_name + ": " + assignment['name'])
+                    print(f"Assignment already synced: {course_name}{assignment['name']} ")
             if config['sync_null_assignments'] == False:
                 if assignment['submission_types'][0] == 'not_graded' or assignment['submission_types'][0] == 'none':
                     print("Ignoring ungraded/non-submittable assignment: " + course_name + ": " + assignment['name'])
@@ -222,8 +222,7 @@ def transfer_assignments_to_todoist():
             else:
                 print(f"assignment already submitted {assignment['name'] + course_name}")
         elif not is_synced:
-            print(item)
-            update_task(assignment, item)
+            update_task(assignment, task)
 
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project corresponding to project_id
@@ -237,10 +236,9 @@ def add_new_task(assignment, project_id):
 
             )
             
-def update_task(assignment,item):
+def update_task(assignment,task):
     try:
-        is_success = todoist_api.update_task(task_id=item.id, due_datetime=assignment['due_at'])
-        print(is_success)
+        todoist_api.update_task(task_id=task.id, due_datetime=assignment['due_at'])
     except Exception as error:
         print(error)
 
