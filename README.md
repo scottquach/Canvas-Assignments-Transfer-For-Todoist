@@ -14,7 +14,7 @@ Easy run allows all configuration to be done inside of the program, avoiding the
 - Install required packages with `pip install -r requirements.txt`
 - Run `python easy_run.py` and follow up the settings
 
-##Known Limitations
+## Known Limitations
 
 Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas (because Todoist API does not accept "NULL" as a due date update value - so due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
 
@@ -22,7 +22,7 @@ Name or Assignment Changes: The script will not modify or remove Todist tasks re
 
 **Every teacher uses Canvas differently. My scripts have several hacks to handle weird things my different teachers would do (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
 
-##FAQ
+## FAQ
 Q: Why are Priority numbers different?
 
 A: The Todoist API Priority numbers go from 1 (Default) to 4 (Very Urgent), which is the opposite as the UI (https://developer.todoist.com/rest/v2/#create-a-new-task)
