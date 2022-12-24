@@ -1,0 +1,72 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "scottquach",
+      "name": "Scott Quach",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11187380?v=4",
+      "profile": "https://scottquach.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "stacksjb",
+      "name": "Jesse",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2865491?v=4",
+      "profile": "https://github.com/stacksjb",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "andreicozma1",
+      "name": "Andrei Cozma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14914491?v=4",
+      "profile": "http://www.andreicozma.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "Nassuel",
+      "name": "Nassuel N. Valera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34118212?v=4",
+      "profile": "http://linkedin.com/in/nassuelvc",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "lukew3",
+      "name": "Luke Weiler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47042841?v=4",
+      "profile": "http://stemplayeronline.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "cdstanford",
+      "name": "Caleb Stanford",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9029697?v=4",
+      "profile": "http://web.cs.ucdavis.edu/~cdstanford",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "Canvas-Assignments-Transfer-For-Todoist-S",
+  "projectOwner": "stacksjb"
+}
