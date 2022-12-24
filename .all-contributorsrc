@@ -42,6 +42,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "lukew3",
+      "name": "Luke Weiler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47042841?v=4",
+      "profile": "http://stemplayeronline.com",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
