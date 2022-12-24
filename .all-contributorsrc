@@ -26,14 +26,13 @@
       ]
     },
     {
-
       "login": "andreicozma1",
       "name": "Andrei Cozma",
       "avatar_url": "https://avatars.githubusercontent.com/u/14914491?v=4",
       "profile": "http://www.andreicozma.com",
-       "contributions": [
+      "contributions": [
         "bug"
-         ]
+      ]
     },
     {
       "login": "Nassuel",
@@ -51,6 +50,16 @@
       "profile": "http://stemplayeronline.com",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "cdstanford",
+      "name": "Caleb Stanford",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9029697?v=4",
+      "profile": "http://web.cs.ucdavis.edu/~cdstanford",
+      "contributions": [
+        "ideas",
+        "mentoring"
       ]
     }
   ],
