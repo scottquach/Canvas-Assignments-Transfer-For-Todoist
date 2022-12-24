@@ -1,6 +1,6 @@
 # Canvas-Transfer-For-Todoist
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 not created by, affiliated with, or supported by Doist
@@ -60,6 +60,7 @@ Thanks to all the below for their contributions!
     <tr>
       <td align="center"><a href="https://scottquach.com/"><img src="https://avatars.githubusercontent.com/u/11187380?v=4?s=100" width="100px;" alt="Scott Quach"/><br /><sub><b>Scott Quach</b></sub></a><br /><a href="https://github.com/stacksjb/Canvas-Assignments-Transfer-For-Todoist-S/commits?author=scottquach" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/stacksjb"><img src="https://avatars.githubusercontent.com/u/2865491?v=4?s=100" width="100px;" alt="Jesse"/><br /><sub><b>Jesse</b></sub></a><br /><a href="https://github.com/stacksjb/Canvas-Assignments-Transfer-For-Todoist-S/commits?author=stacksjb" title="Code">💻</a> <a href="https://github.com/stacksjb/Canvas-Assignments-Transfer-For-Todoist-S/issues?q=author%3Astacksjb" title="Bug reports">🐛</a></td>
+      <td align="center"><a href="http://linkedin.com/in/nassuelvc"><img src="https://avatars.githubusercontent.com/u/34118212?v=4?s=100" width="100px;" alt="Nassuel N. Valera"/><br /><sub><b>Nassuel N. Valera</b></sub></a><br /><a href="https://github.com/stacksjb/Canvas-Assignments-Transfer-For-Todoist-S/issues?q=author%3ANassuel" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
