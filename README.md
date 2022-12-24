@@ -10,7 +10,12 @@ This project provides you with an easy way to transfer all of your assignments f
 
 ### Easy Run
 
-Easy run allows all configuration to be done inside of the program, avoiding the hassle of editing the api_keys file directly. Just install the dependencies and follow the instructions on screen.
+Easy run allows all configuration to be done inside of the program, avoiding the hassle of creating the config file directly. 
+Just install the dependencies and follow the instructions on screen.
+
+- Obtain your API Keys for Todoist and Canvas
+- On Canvas desktop go to settings and click on ```New Access Token``` under Approved Integrations
+- On Todoist desktop go to settings and the API token will be listed under the ```Integrations Tab```. You can also generate an application-specific token at https://developer.todoist.com/appconsole.html
 - Install required packages with `pip install -r requirements.txt`
 - Run `python easy_run.py` and follow up the settings
 
