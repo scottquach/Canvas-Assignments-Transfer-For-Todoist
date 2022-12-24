@@ -14,9 +14,9 @@ Easy run allows all configuration to be done inside of the program, avoiding the
 - Install required packages with `pip install -r requirements.txt`
 - Run `python easy_run.py` and follow up the settings
 
-## Known Limitations
+## Known Issues/Limitations
 
-Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas (because Todoist API does not accept "NULL" as a due date update value - so due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
+Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas, as Todoist API does not accept "NULL" as a due date update value.  Due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
 
 Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name. Note that
 
@@ -37,6 +37,9 @@ A: Teachers can lock assignments so they cannot be viewed or done. These locks c
 
 ## Contributing
 I use this regularly for my classes to sync to Todoist (which is my work System of Record), please open an issue for any problems you encounter or questions you have!
+
+## Troubleshooting
+If you encounter any issues, please open an Issue with the appropriate data
 
 ## Contributors
 Thanks to all the below for their contributions!
