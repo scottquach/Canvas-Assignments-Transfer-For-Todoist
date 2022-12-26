@@ -20,15 +20,16 @@ Just install the dependencies and follow the instructions on screen.
 - On Canvas desktop go to settings and click on ```New Access Token``` under Approved Integrations
 - On Todoist desktop go to settings and the API token will be listed under the ```Integrations Tab```. You can also generate an application-specific token at https://developer.todoist.com/appconsole.html
 - Install required packages with `pip install -r requirements.txt`
-- Run `python easy_run.py` and follow up the settings
+- Run `python easy_run.py` and follow up the prompts
+- A config.json file will be created with your selections so it can be run again in the future using the same keys and/or classes
 
 ## Known Issues/Limitations
 
 Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas, as Todoist API does not accept "NULL" as a due date update value.  Due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
 
-Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name. Note that
+Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
 
-**Every teacher uses Canvas differently. My scripts have several hacks to handle weird things my different teachers would do (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
+Note that every teacher uses Canvas differently - there are several options available to handle different things teachers do in Canvas (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
 
 ## FAQ
 Q: Why are Priority numbers different?
@@ -37,7 +38,7 @@ A: The Todoist API Priority numbers go from 1 (Default) to 4 (Very Urgent), whic
 
 Q: What are null/unsubmittable assignments?
 
-A: Teachers can set submission method for an assignment to "none" or "not graded". This filters out those assignments.
+A: Teachers can set submission method for an assignment to "none" or "not graded". This filters out those assignments (since you can't actually submit them)
 
 Q: What are locked assignments?
 
