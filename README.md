@@ -13,7 +13,7 @@ This project provides you with an easy way to transfer all of your assignments f
 
 ### Easy Run
 
-Easy run allows all configuration to be done inside of the program, avoiding the hassle of creating the config file directly. 
+Easy run allows all configuration to be done inside of the program, avoiding the hassle of creating the config file directly.
 Just install the dependencies and follow the instructions on screen.
 
 - Obtain your API Keys for Todoist and Canvas
