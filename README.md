@@ -31,6 +31,8 @@ Name or Assignment Changes: The script will not modify or remove Todist tasks re
 
 Note that every teacher uses Canvas differently - there are several options available to handle different things teachers do in Canvas (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
 
+Duplicate tasks: Tasks are tracked based on the the class name and assigment title within Canvas. The script does not delete or remove tasks. If a teacher renames an assignment, you will end up with two assignments in Todoist (one under the old name, one under the new name) - only the new one will be kept up to date with any date changes.
+
 ## FAQ
 Q: Why are Priority numbers different?
 
