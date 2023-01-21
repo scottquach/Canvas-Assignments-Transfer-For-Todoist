@@ -229,22 +229,22 @@ def transfer_assignments_to_todoist():
             ):
                 is_added = True
                 if (
-                    assignment["due_at"] is not None and task.due is None
-                ):  ##Handle case where assignment has a due date but task does not
+                    assignment["due_at"] is None
+                ):  ##Ignore updates if assignment has no due date and already synced
+                    break
+                if (
+                    task.due is None and assignment["due_at"] is not None
+                ):  ##Handle case where task does not have due date but assignment does
                     is_synced = False
                     print(
                         f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                     )
                     break
                 if (
-                    assignment["due_at"] is None
-                ):  ##Ignore updates if assignment has no due date and already synced
-                    break
-                if (
                     task.due is not None
                 ):  # Check for existence of task.due first to prevent error
                     if (
-                        task.due.datetime != assignment["due_at"]
+                        assignment["due_at"] != task.due.datetime
                     ):  ## Handle case where assignment and task both have due dates but they are different
                         is_synced = False
                         print(
