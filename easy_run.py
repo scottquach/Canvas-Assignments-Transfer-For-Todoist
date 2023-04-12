@@ -183,7 +183,16 @@ def load_assignments():
         if response.status_code == 401:
             print("Unauthorized; Check API Key")
             exit()
+        paginated = response.json()
+        while "next" in response.links:
+            response = requests.get(
+                response.links["next"]["url"], headers=header, params=param
+            )
+            paginated.extend(response.json())
         assignments.extend(list(response.json()))
+    if response.status_code == 401:
+        print("Unauthorized; Check API Key")
+        exit()
 
 
 # Loads all user tasks from Todoist
