@@ -157,5 +157,4 @@ cython_debug/
 
 .DS_Store
 config.json
-config.json
 .pre-commit-config.yaml
