@@ -24,7 +24,8 @@ def main():
     initialize_api()
     print("API INITIALIZED")
     select_courses()
-    print("Working...")
+    print(f"Selected {len(course_ids)} courses")
+    print("Syncing Canvas Assignments...")
     load_todoist_projects()
     load_assignments()
     load_todoist_tasks()
@@ -190,12 +191,14 @@ def load_assignments():
             )
             paginated.extend(response.json())
         assignments.extend(list(response.json()))
+    print(f"Loaded {len(assignments)} Canvas Assignments")
 
 
 # Loads all user tasks from Todoist
 def load_todoist_tasks():
     tasks = todoist_api.get_tasks()
     todoist_tasks.extend(tasks)
+    print(f"Loaded {len(todoist_tasks)} Todoist Tasks")
 
 
 # Loads all user projects from Todoist
@@ -203,6 +206,7 @@ def load_todoist_projects():
     projects = todoist_api.get_projects()
     for project in projects:
         todoist_project_dict[project.name] = project.id
+    print(f"Loaded {len(todoist_project_dict)} Todoist Projects")
 
 
 # Checks to see if the user has a project matching their course names, if there
@@ -211,7 +215,8 @@ def create_todoist_projects():
     for course_id in course_ids:
         if courses_id_name_dict[course_id] not in todoist_project_dict:
             project = todoist_api.add_project(courses_id_name_dict[course_id])
-
+            print(f"Project {courses_id_name_dict[course_id]} created")
+            todoist_api.commit()
             todoist_project_dict[project.name] = project.id
         else:
             print(f"Project {courses_id_name_dict[course_id]} exists")
@@ -220,6 +225,13 @@ def create_todoist_projects():
 # Transfers over assignments from canvas over to Todoist, the method Checks
 # to make sure the assignment has not already been transferred to prevent overlap
 def transfer_assignments_to_todoist():
+    new_added = 0
+    updated = 0
+    already_synced = 0
+    ignored_ungraded = 0
+    ignored_nodate = 0
+    ignored_locked = 0
+    submitted = 0
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment["course_id"]]
         project_id = todoist_project_dict[course_name]
@@ -257,19 +269,16 @@ def transfer_assignments_to_todoist():
                             f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                         )
                         break
-                else:
-                    print(
-                        f"Assignment already synced: {course_name}{assignment['name']} "
-                    )
             if config["sync_null_assignments"] == False:
                 if (
                     assignment["submission_types"][0] == "not_graded"
-                    or assignment["submission_types"][0] == "none"
+                    or assignment["submission_types"][0] is None
                 ):  ##Handle case where assignment is not graded
                     print(
                         f"Ignoring ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
                     )
                     is_added = True
+                    ignored_ungraded += 1
                     break
             if (
                 assignment["due_at"] is None
@@ -278,6 +287,7 @@ def transfer_assignments_to_todoist():
                 print(
                     f"Ignoring assignment with no due date: {course_name}: {assignment['name']}"
                 )
+                ignored_nodate += 1
                 is_added = True
                 break
             if (
@@ -290,6 +300,7 @@ def transfer_assignments_to_todoist():
                     f"Ignoring assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
                 )
                 is_added = True
+                ignored_locked += 1
                 break
             if (
                 assignment["locked_for_user"] == True
@@ -300,6 +311,7 @@ def transfer_assignments_to_todoist():
                     f"Ignoring assignment that is locked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
                 )
                 is_added = True
+                ignored_locked += 1
                 break
 
         if not is_added:
@@ -307,15 +319,28 @@ def transfer_assignments_to_todoist():
                 assignment["submission"]["submitted_at"] is None
                 or assignment["submission"]["workflow_state"] == "unsubmitted"
                 or assignment["submission"]["attempt"] is None
+                or assignment["has_submitted_submissions"] is False
             ):
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
+                new_added += 1
             else:
-                print(
-                    f"assignment already submitted {assignment['name']} {course_name}"
-                )
+                submitted += 1
         elif not is_synced:
             update_task(assignment, task)
+            updated += 1
+
+        if is_synced and is_added:
+            already_synced += 1
+
+    print(f"Total Assignments: {len(assignments)}")
+    print(f"Total Already Submitted: {submitted}")
+    print(f"Total Added to Todoist: {new_added}")
+    print(f"Total Updated In Todoist: {updated}")
+    print(f"Total Already Synced: {already_synced}")
+    print(f"Ungraded and ignored: {ignored_ungraded}")
+    print(f"With no due date and Ignored: {ignored_nodate}")
+    print(f"Locked Assignments Ignored: {ignored_locked}")
 
 
 # Adds a new task from a Canvas assignment object to Todoist under the
