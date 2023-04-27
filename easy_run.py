@@ -190,7 +190,7 @@ def load_assignments():
                 response.links["next"]["url"], headers=header, params=param
             )
             paginated.extend(response.json())
-        assignments.extend(list(response.json()))
+        assignments.extend(paginated)
     print(f"Loaded {len(assignments)} Canvas Assignments")
 
 
@@ -216,7 +216,6 @@ def create_todoist_projects():
         if courses_id_name_dict[course_id] not in todoist_project_dict:
             project = todoist_api.add_project(courses_id_name_dict[course_id])
             print(f"Project {courses_id_name_dict[course_id]} created")
-            todoist_api.commit()
             todoist_project_dict[project.name] = project.id
         else:
             print(f"Project {courses_id_name_dict[course_id]} exists")
