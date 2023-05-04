@@ -120,20 +120,12 @@ def initial_config():
 # that has course ids as the keys and their names as the values
 def select_courses():
     global config
-
     response = requests.get(
         f"{config['canvas_api_heading']}/api/v1/courses", headers=header, params=param
     )
     if response.status_code == 401:
         print("Unauthorized; Check API Key")
         exit()
-    paginated = response.json()
-    while "next" in response.links:
-        response = requests.get(
-            response.links["next"]["url"], headers=header, params=param
-        )
-    paginated.extend(response.json())
-    response.extend(paginated)
 
     if config["courses"]:
         use_previous_input = input(
