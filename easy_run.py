@@ -120,7 +120,6 @@ def initial_config():
 # that has course ids as the keys and their names as the values
 def select_courses():
     global config
-
     response = requests.get(
         f"{config['canvas_api_heading']}/api/v1/courses", headers=header, params=param
     )
@@ -314,12 +313,7 @@ def transfer_assignments_to_todoist():
                 break
 
         if not is_added:
-            if (
-                assignment["submission"]["submitted_at"] is None
-                or assignment["submission"]["workflow_state"] == "unsubmitted"
-                or assignment["submission"]["attempt"] is None
-                or assignment["has_submitted_submissions"] is False
-            ):
+            if assignment["submission"]["workflow_state"] == "unsubmitted":
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
