@@ -313,10 +313,7 @@ def transfer_assignments_to_todoist():
                 break
 
         if not is_added:
-            if (
-                assignment["has_submitted_submissions"] is False
-                or assignment["submission"]["workflow_state"] == "unsubmitted"
-            ):
+            if assignment["submission"]["workflow_state"] == "unsubmitted":
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
