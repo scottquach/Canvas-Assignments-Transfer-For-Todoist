@@ -25,13 +25,25 @@ Just install the dependencies and follow the instructions on screen.
 
 ## Known Issues/Limitations
 
+> :exclamation: Every teacher uses Canvas slighly differently. We cannot be 100% responsible for any grades or assignments missed. It is YOUR resoponsibility to reeview Canvas regularly to ensure you are not behind.
+
 Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas, as Todoist API does not accept "NULL" as a due date update value.  Due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
 
 Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
 
-Note that every teacher uses Canvas differently - there are several options available to handle different things teachers do in Canvas (such as creating ungraded/unsubmittable assignments, locked assignments, etc)
+Graded Assignments: This script ignores any assignments once they are graded.
+
+> :warning: This means that if a teacher enters "0" the assignment will be ignored, even if you have additional opportunities to submit it. Thus, it is recommended that you do not remove a task from Todoist until you are complete.
+
+Submissions: This script assumes assignments with submissions do not need to be added.
+
+> :zap: You must keep track of any re-submissions or regrades seperately; this script does not have logic to handle them.
 
 Duplicate tasks: Tasks are tracked based on the the class name and assigment title within Canvas. The script does not delete or remove tasks. If a teacher renames an assignment, you will end up with two assignments in Todoist (one under the old name, one under the new name) - only the new one will be kept up to date with any date changes.
+
+:point_up: Every teacher uses Canvas differently - there are several options available to handle different things teachers do in Canvas (such as creating ungraded/unsubmittable assignments, locked assignments, etc).
+
+I recommend synching all assignments at the beginning of the semester, then adjusting your settings to exclude ungraded and null assignments once they are fully added.
 
 ## FAQ
 Q: Why are Priority numbers different?
