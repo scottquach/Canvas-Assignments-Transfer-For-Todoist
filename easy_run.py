@@ -127,6 +127,13 @@ def select_courses():
     if response.status_code == 401:
         print("Unauthorized; Check API Key")
         exit()
+    paginated = response.json()
+    while "next" in response.links:
+        response = requests.get(
+            response.links["next"]["url"], headers=header, params=param
+        )
+    paginated.extend(response.json())
+    response.extend(paginated)
 
     if config["courses"]:
         use_previous_input = input(
@@ -315,10 +322,8 @@ def transfer_assignments_to_todoist():
 
         if not is_added:
             if (
-                assignment["submission"]["submitted_at"] is None
+                assignment["has_submitted_submissions"] is False
                 or assignment["submission"]["workflow_state"] == "unsubmitted"
-                or assignment["submission"]["attempt"] is None
-                or assignment["has_submitted_submissions"] is False
             ):
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
