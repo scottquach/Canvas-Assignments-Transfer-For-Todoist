@@ -238,7 +238,6 @@ def transfer_assignments_to_todoist():
         is_synced = True
 
         for task in todoist_tasks:
-            # print(task.content)
             if (
                 task.content == f"[{assignment['name']}]({assignment['html_url']}) Due"
                 and task.project_id == project_id
@@ -270,7 +269,7 @@ def transfer_assignments_to_todoist():
             if config["sync_null_assignments"] == False:
                 if (
                     assignment["submission_types"][0] == "not_graded"
-                    or assignment["submission_types"][0] is None
+                    or assignment["submission_types"][0] == "none"
                 ):  ##Handle case where assignment is not graded
                     print(
                         f"Ignoring ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
@@ -319,7 +318,7 @@ def transfer_assignments_to_todoist():
                 new_added += 1
             else:
                 submitted += 1
-        elif not is_synced:
+        if is_added and not is_synced:
             update_task(assignment, task)
             updated += 1
 
