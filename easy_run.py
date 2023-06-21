@@ -4,7 +4,7 @@ import re
 import json
 from todoist_api_python.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # Loaded configuration files and creates a list of course_ids
 config = {}
@@ -290,7 +290,7 @@ def transfer_assignments_to_todoist():
                 assignment["unlock_at"] is not None
                 and config["sync_locked_assignments"] == False
                 and assignment["unlock_at"]
-                > (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat()
+                > (datetime.now() + timedelta(days=1)).isoformat()
             ):
                 print(
                     f"Excluding assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
