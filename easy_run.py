@@ -5,6 +5,8 @@ import json
 from todoist_api_python.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
 from datetime import datetime, timezone, timedelta
+import time
+from random import randint
 
 # Loaded configuration files and creates a list of course_ids
 config = {}
@@ -122,28 +124,34 @@ def initial_config():
 # that has course ids as the keys and their names as the values
 def select_courses():
     global config
-    response = requests.get(
-        f"{config['canvas_api_heading']}/api/v1/courses", headers=header, params=param
-    )
-    if response.status_code == 401:
-        print("Unauthorized; Check API Key")
-        exit()
-
-    if config["courses"]:
-        use_previous_input = input(
-            "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
+    try:
+        response = requests.get(
+            f"{config['canvas_api_heading']}/api/v1/courses",
+            headers=header,
+            params=param,
         )
-        print("")
-        if use_previous_input == "y" or use_previous_input == "Y":
-            course_ids.extend(
-                list(map(lambda course_id: int(course_id), config["courses"]))
-            )
-            for course in response.json():
-                courses_id_name_dict[course.get("id", None)] = re.sub(
-                    r"[^-a-zA-Z0-9._\s]", "", course.get("name", "")
-                )
-            return
+        if response.status_code == 401:
+            print("Unauthorized; Check API Key")
+            exit()
 
+        if config["courses"]:
+            use_previous_input = input(
+                "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
+            )
+            print("")
+            if use_previous_input == "y" or use_previous_input == "Y":
+                course_ids.extend(
+                    list(map(lambda course_id: int(course_id), config["courses"]))
+                )
+                for course in response.json():
+                    courses_id_name_dict[course.get("id", None)] = re.sub(
+                        r"[^-a-zA-Z0-9._\s]", "", course.get("name", "")
+                    )
+                return
+    except Exception as error:
+        print(f"Error while loading courses: {error}")
+        print(f"Check API Key and Canvas URL")
+        exit()
     # If the user does not choose to use courses selected last time
     for i, course in enumerate(response.json(), start=1):
         courses_id_name_dict[course.get("id", None)] = re.sub(
@@ -176,23 +184,36 @@ def select_courses():
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
-    for course_id in course_ids:
-        response = requests.get(
-            f"{config['canvas_api_heading']}/api/v1/courses/{str(course_id)}/assignments",
-            headers=header,
-            params=param,
-        )
-        if response.status_code == 401:
-            print("Unauthorized; Check API Key")
-            exit()
-        paginated = response.json()
-        while "next" in response.links:
+    delay = randint(1, 3)  # random delay to prevent rate limiting
+    try:
+        for course_id in course_ids:
             response = requests.get(
-                response.links["next"]["url"], headers=header, params=param
+                f"{config['canvas_api_heading']}/api/v1/courses/{str(course_id)}/assignments",
+                headers=header,
+                params=param,
             )
-            paginated.extend(response.json())
-        assignments.extend(paginated)
-    print(f"Loaded {len(assignments)} Canvas Assignments")
+            if response.status_code == 401:
+                print("Unauthorized; Check API Key")
+                exit()
+            paginated = response.json()
+            while "next" in response.links:
+                req_count += 1
+                print(f"Sleeping for {delay} seconds to prevent rate limiting")
+                time.sleep(delay)
+                response = requests.get(
+                    response.links["next"]["url"], headers=header, params=param
+                )
+                paginated.extend(response.json())
+            print(
+                f"Loaded {len(paginated)} Assignments for Course {courses_id_name_dict[course_id]}"
+            )
+            assignments.extend(paginated)
+        print(f"Loaded {len(assignments)} Total Canvas Assignments")
+        return
+    except Exception as error:
+        print(f"Error while loading Assignments: {error}")
+        print(f"Check or regenerate API Key and Canvas URL")
+        exit()
 
 
 # Loads all user tasks from Todoist
@@ -321,7 +342,7 @@ def transfer_assignments_to_todoist():
 
         if is_synced and is_added:
             already_synced += 1
-
+    print(f"  {'-'*52}")
     print(f"Added to Todoist: {new_added}")
     print(f"Due Date Updated In Todoist: {updated}")
     print(f"Already Synced to Todoist: {already_synced}")
@@ -341,6 +362,8 @@ def add_new_task(assignment, project_id):
 
 
 def canvas_assignment_stats():
+    print(f"  {'-'*52}")
+    print(" #     Current Canvas Assignment Statistics     #")
     print(f"Total Assignments: {len(assignments)}")
     graded_timestamps = []
     submitted = 0
@@ -349,32 +372,35 @@ def canvas_assignment_stats():
     locked = 0
     instructor_graded = 0
     for assignment in assignments:
-        if assignment["submission"]["workflow_state"] != "unsubmitted":
-            submitted += 1
-        if assignment["submission_types"][0] == "not_graded":
-            ignored_not_graded += 1
-        if assignment["submission_types"][0] == "none":
-            ignored_no_submission += 1
-        if assignment["locked_for_user"] == True:
-            locked += 1
-        if assignment["graded_submissions_exist"] == True:
-            instructor_graded += 1
+        # Check for assignment graded_at dates, and if graded_at is not None, add to graded_timestamps list to report most recent grade update
         if assignment["submission"]["graded_at"] is not None:
             timestamp = datetime.strptime(
                 (assignment["submission"]["graded_at"]), "%Y-%m-%dT%H:%M:%SZ"
             )
             graded_timestamps.append(timestamp)
+        if assignment["graded_submissions_exist"] == True:
+            instructor_graded += 1
+        if assignment["submission"]["workflow_state"] != "unsubmitted":
+            submitted += 1
+        elif assignment["locked_for_user"] == True:
+            locked += 1
+        elif assignment["submission_types"][0] == "none":
+            ignored_no_submission += 1
+        elif assignment["submission_types"][0] == "not_graded":
+            ignored_not_graded += 1
 
-    print(f"Submitted Assignments: {submitted}")
-    print(f"Ignored/Ungraded Assignments: {ignored_not_graded}")
-    print(f"Unsubmittable: {ignored_no_submission}")
-    print(f"Locked Assignments: {locked}")
-    print(f"Graded by Instructor: {instructor_graded}")
+    print(f"Total Submitted: {submitted}")
+    print(f"Total Locked: {locked}")
+    print(f"Total Unsubmittable: {ignored_no_submission}")
+    print(f"Total Not_Graded: {ignored_not_graded}")
     print(
         f"Remaining Assignments: {(len(assignments)-submitted-ignored_not_graded-ignored_no_submission-locked)}"
     )
+    print(f"\n Grading Statistics:")
+    print(f"Total Currently Graded: {max(instructor_graded,len(graded_timestamps))}")
+
     latest_update = max(graded_timestamps)
-    print(f"Last Instructor Grade Update: {aslocaltimestr(latest_update)}")
+    print(f"Last Grade Update: {aslocaltimestr(latest_update)}")
 
 
 # def canvas_grades():
