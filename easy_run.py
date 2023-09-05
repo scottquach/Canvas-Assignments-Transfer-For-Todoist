@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Import Libraries
 import requests
 import re
 import json
@@ -8,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 import time
 from random import randint
 
-# Loaded configuration files and creates a list of course_ids
+# Load configuration files and creates a list of course_ids
 config = {}
 header = {}
 param = {"per_page": "100", "include": "submission", "enrollment_state": "active"}
@@ -63,7 +64,7 @@ def initialize_api():
     header.update({"Authorization": f"Bearer {config['canvas_api_key'].strip()}"})
 
 
-def initial_config():
+def initial_config():  # Initial configuration for first time users
     print(
         "Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done."
     )
@@ -122,8 +123,11 @@ def initial_config():
 
 # Allows the user to select the courses that they want to transfer while generating a dictionary
 # that has course ids as the keys and their names as the values
+
+
 def select_courses():
     global config
+
     try:
         response = requests.get(
             f"{config['canvas_api_heading']}/api/v1/courses",
@@ -133,7 +137,7 @@ def select_courses():
         if response.status_code == 401:
             print("Unauthorized; Check API Key")
             exit()
-
+        # Note that only courses in "Active" state are returned
         if config["courses"]:
             use_previous_input = input(
                 "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
@@ -152,6 +156,7 @@ def select_courses():
         print(f"Error while loading courses: {error}")
         print(f"Check API Key and Canvas URL")
         exit()
+
     # If the user does not choose to use courses selected last time
     for i, course in enumerate(response.json(), start=1):
         courses_id_name_dict[course.get("id", None)] = re.sub(
@@ -257,55 +262,58 @@ def transfer_assignments_to_todoist():
         is_synced = True
 
         for task in todoist_tasks:
+            # Check if assignment is already added to Todoist with same name and within the same Project
             if (
                 task.content == f"[{assignment['name']}]({assignment['html_url']}) Due"
                 and task.project_id == project_id
             ):
                 is_added = True
-                if (
-                    assignment["due_at"] is None
-                ):  ##Ignore updates if assignment has no due date and already synced
+                # Ignore updates if assignment has no due date and already synced
+                if assignment["due_at"] is None:
                     break
-                if (
-                    task.due is None and assignment["due_at"] is not None
-                ):  ##Handle case where task does not have due date but assignment does
+                # Handle case where task does not have due date but assignment does
+                if task.due is None and assignment["due_at"] is not None:
                     is_synced = False
                     print(
                         f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                     )
+                    update_task(assignment, task)
                     break
-                if (
-                    task.due is not None
-                ):  # Check for existence of task.due first to prevent error
-                    if (
-                        assignment["due_at"] != task.due.datetime
-                    ):  ## Handle case where assignment and task both have due dates but they are different
+                # Check for existence of task.due first to prevent error
+                if task.due is not None:
+                    # Handle case where assignment and task both have due dates but they are different
+                    if assignment["due_at"] != task.due.datetime:
                         is_synced = False
                         print(
                             f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                         )
+                        update_task(assignment, task)
                         break
+
+            # Handle case where assignment is not graded
             if config["sync_null_assignments"] == False:
                 if (
                     assignment["submission_types"][0] == "not_graded"
                     or assignment["submission_types"][0] == "none"
-                ):  ##Handle case where assignment is not graded
+                ):
                     print(
                         f"Excluding ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
                     )
                     is_added = True
                     excluded += 1
                     break
+            # Handle case where assignment has no due date and user has specified to not sync assignments with no due date
             if (
                 assignment["due_at"] is None
                 and config["sync_no_due_date_assignments"] == False
-            ):  ##Handle case where assignment has no due date
+            ):
                 print(
                     f"Excluding assignment with no due date: {course_name}: {assignment['name']}"
                 )
                 excluded += 1
                 is_added = True
                 break
+            # Handle case where assignment is locked and unlock date is more than 1 day in the future
             if (
                 assignment["unlock_at"] is not None
                 and config["sync_locked_assignments"] == False
@@ -318,6 +326,7 @@ def transfer_assignments_to_todoist():
                 is_added = True
                 excluded += 1
                 break
+            # Handle case where assignment is locked and unlock date is empty
             if (
                 assignment["locked_for_user"] == True
                 and assignment["unlock_at"] is None
@@ -329,16 +338,16 @@ def transfer_assignments_to_todoist():
                 is_added = True
                 excluded += 1
                 break
-
+        # Add assignment to Todoist if not already added - Ignore assignments that are already submitted
         if not is_added:
             if assignment["submission"]["workflow_state"] == "unsubmitted":
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
+        # Update count of updated assignments (updated due date - already updated in Todoist)
         if is_added and not is_synced:
-            update_task(assignment, task)
             updated += 1
-
+        # Update count of already synced assignments (already synced to Todoist, no updates)
         if is_synced and is_added:
             already_synced += 1
     print(f"  {'-'*52}")
@@ -411,7 +420,7 @@ def update_task(assignment, task):
         print(f"Error while updating task: {error}")
 
 
-##Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
+# Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
 def utc_to_local(utc_dt):
     return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
