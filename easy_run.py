@@ -17,6 +17,7 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
+delay = randint(1, 3)  # random delay for throttling/rate limiting
 
 
 def main():
@@ -183,7 +184,7 @@ def select_courses():
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
-    delay = randint(1, 3)  # random delay to prevent rate limiting
+
     try:
         for course_id in course_ids:
             response = requests.get(
@@ -196,8 +197,7 @@ def load_assignments():
                 exit()
             paginated = response.json()
             while "next" in response.links:
-                req_count += 1
-                print(f"Sleeping for {delay} seconds to prevent rate limiting")
+                print(f"Sleeping for {delay} seconds...")
                 time.sleep(delay)
                 response = requests.get(
                     response.links["next"]["url"], headers=header, params=param
