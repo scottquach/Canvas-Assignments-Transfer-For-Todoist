@@ -4,12 +4,14 @@ import re
 import json
 from todoist_api_python.api import TodoistAPI
 from requests.auth import HTTPDigestAuth
-import datetime
+from datetime import datetime, timezone, timedelta
+import time
+from random import randint
 
 # Loaded configuration files and creates a list of course_ids
 config = {}
 header = {}
-param = {"per_page": "100", "include": "submission"}
+param = {"per_page": "100", "include": "submission", "enrollment_state": "active"}
 course_ids = []
 assignments = []
 todoist_tasks = []
@@ -31,6 +33,7 @@ def main():
     load_todoist_tasks()
     create_todoist_projects()
     transfer_assignments_to_todoist()
+    canvas_assignment_stats()
     print("Done!")
 
 
@@ -120,28 +123,34 @@ def initial_config():
 # that has course ids as the keys and their names as the values
 def select_courses():
     global config
-    response = requests.get(
-        f"{config['canvas_api_heading']}/api/v1/courses", headers=header, params=param
-    )
-    if response.status_code == 401:
-        print("Unauthorized; Check API Key")
-        exit()
-
-    if config["courses"]:
-        use_previous_input = input(
-            "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
+    try:
+        response = requests.get(
+            f"{config['canvas_api_heading']}/api/v1/courses",
+            headers=header,
+            params=param,
         )
-        print("")
-        if use_previous_input == "y" or use_previous_input == "Y":
-            course_ids.extend(
-                list(map(lambda course_id: int(course_id), config["courses"]))
-            )
-            for course in response.json():
-                courses_id_name_dict[course.get("id", None)] = re.sub(
-                    r"[^-a-zA-Z0-9._\s]", "", course.get("name", "")
-                )
-            return
+        if response.status_code == 401:
+            print("Unauthorized; Check API Key")
+            exit()
 
+        if config["courses"]:
+            use_previous_input = input(
+                "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
+            )
+            print("")
+            if use_previous_input == "y" or use_previous_input == "Y":
+                course_ids.extend(
+                    list(map(lambda course_id: int(course_id), config["courses"]))
+                )
+                for course in response.json():
+                    courses_id_name_dict[course.get("id", None)] = re.sub(
+                        r"[^-a-zA-Z0-9._\s]", "", course.get("name", "")
+                    )
+                return
+    except Exception as error:
+        print(f"Error while loading courses: {error}")
+        print(f"Check API Key and Canvas URL")
+        exit()
     # If the user does not choose to use courses selected last time
     for i, course in enumerate(response.json(), start=1):
         courses_id_name_dict[course.get("id", None)] = re.sub(
@@ -174,23 +183,36 @@ def select_courses():
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
-    for course_id in course_ids:
-        response = requests.get(
-            f"{config['canvas_api_heading']}/api/v1/courses/{str(course_id)}/assignments",
-            headers=header,
-            params=param,
-        )
-        if response.status_code == 401:
-            print("Unauthorized; Check API Key")
-            exit()
-        paginated = response.json()
-        while "next" in response.links:
+    delay = randint(1, 3)  # random delay to prevent rate limiting
+    try:
+        for course_id in course_ids:
             response = requests.get(
-                response.links["next"]["url"], headers=header, params=param
+                f"{config['canvas_api_heading']}/api/v1/courses/{str(course_id)}/assignments",
+                headers=header,
+                params=param,
             )
-            paginated.extend(response.json())
-        assignments.extend(paginated)
-    print(f"Loaded {len(assignments)} Canvas Assignments")
+            if response.status_code == 401:
+                print("Unauthorized; Check API Key")
+                exit()
+            paginated = response.json()
+            while "next" in response.links:
+                req_count += 1
+                print(f"Sleeping for {delay} seconds to prevent rate limiting")
+                time.sleep(delay)
+                response = requests.get(
+                    response.links["next"]["url"], headers=header, params=param
+                )
+                paginated.extend(response.json())
+            print(
+                f"Loaded {len(paginated)} Assignments for Course {courses_id_name_dict[course_id]}"
+            )
+            assignments.extend(paginated)
+        print(f"Loaded {len(assignments)} Total Canvas Assignments")
+        return
+    except Exception as error:
+        print(f"Error while loading Assignments: {error}")
+        print(f"Check or regenerate API Key and Canvas URL")
+        exit()
 
 
 # Loads all user tasks from Todoist
@@ -226,10 +248,7 @@ def transfer_assignments_to_todoist():
     new_added = 0
     updated = 0
     already_synced = 0
-    ignored_ungraded = 0
-    ignored_nodate = 0
-    ignored_locked = 0
-    submitted = 0
+    excluded = 0
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment["course_id"]]
         project_id = todoist_project_dict[course_name]
@@ -238,7 +257,6 @@ def transfer_assignments_to_todoist():
         is_synced = True
 
         for task in todoist_tasks:
-            # print(task.content)
             if (
                 task.content == f"[{assignment['name']}]({assignment['html_url']}) Due"
                 and task.project_id == project_id
@@ -270,35 +288,35 @@ def transfer_assignments_to_todoist():
             if config["sync_null_assignments"] == False:
                 if (
                     assignment["submission_types"][0] == "not_graded"
-                    or assignment["submission_types"][0] is None
+                    or assignment["submission_types"][0] == "none"
                 ):  ##Handle case where assignment is not graded
                     print(
-                        f"Ignoring ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
+                        f"Excluding ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
                     )
                     is_added = True
-                    ignored_ungraded += 1
+                    excluded += 1
                     break
             if (
                 assignment["due_at"] is None
                 and config["sync_no_due_date_assignments"] == False
             ):  ##Handle case where assignment has no due date
                 print(
-                    f"Ignoring assignment with no due date: {course_name}: {assignment['name']}"
+                    f"Excluding assignment with no due date: {course_name}: {assignment['name']}"
                 )
-                ignored_nodate += 1
+                excluded += 1
                 is_added = True
                 break
             if (
                 assignment["unlock_at"] is not None
                 and config["sync_locked_assignments"] == False
                 and assignment["unlock_at"]
-                > (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat()
+                > (datetime.now() + timedelta(days=1)).isoformat()
             ):
                 print(
-                    f"Ignoring assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
+                    f"Excluding assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
                 )
                 is_added = True
-                ignored_locked += 1
+                excluded += 1
                 break
             if (
                 assignment["locked_for_user"] == True
@@ -306,10 +324,10 @@ def transfer_assignments_to_todoist():
                 and config["sync_locked_assignments"] == False
             ):
                 print(
-                    f"Ignoring assignment that is locked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
+                    f"Excluding assignment that is locked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
                 )
                 is_added = True
-                ignored_locked += 1
+                excluded += 1
                 break
 
         if not is_added:
@@ -317,23 +335,17 @@ def transfer_assignments_to_todoist():
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
-            else:
-                submitted += 1
-        elif not is_synced:
+        if is_added and not is_synced:
             update_task(assignment, task)
             updated += 1
 
         if is_synced and is_added:
             already_synced += 1
-
-    print(f"Total Assignments: {len(assignments)}")
-    print(f"Total Already Submitted: {submitted}")
-    print(f"Total Added to Todoist: {new_added}")
-    print(f"Total Updated In Todoist: {updated}")
-    print(f"Total Already Synced: {already_synced}")
-    print(f"Ungraded and ignored: {ignored_ungraded}")
-    print(f"With no due date and Ignored: {ignored_nodate}")
-    print(f"Locked Assignments Ignored: {ignored_locked}")
+    print(f"  {'-'*52}")
+    print(f"Added to Todoist: {new_added}")
+    print(f"Due Date Updated In Todoist: {updated}")
+    print(f"Already Synced to Todoist: {already_synced}")
+    print(f"Excluded: {excluded}")
 
 
 # Adds a new task from a Canvas assignment object to Todoist under the
@@ -348,11 +360,62 @@ def add_new_task(assignment, project_id):
     )
 
 
+def canvas_assignment_stats():
+    print(f"  {'-'*52}")
+    print(" #     Current Canvas Assignment Statistics     #")
+    print(f"Total Assignments: {len(assignments)}")
+    graded_timestamps = []
+    submitted = 0
+    ignored_not_graded = 0
+    ignored_no_submission = 0
+    locked = 0
+    instructor_graded = 0
+    for assignment in assignments:
+        # Check for assignment graded_at dates, and if graded_at is not None, add to graded_timestamps list to report most recent grade update
+        if assignment["submission"]["graded_at"] is not None:
+            timestamp = datetime.strptime(
+                (assignment["submission"]["graded_at"]), "%Y-%m-%dT%H:%M:%SZ"
+            )
+            graded_timestamps.append(timestamp)
+        if assignment["graded_submissions_exist"] == True:
+            instructor_graded += 1
+        if assignment["submission"]["workflow_state"] != "unsubmitted":
+            submitted += 1
+        elif assignment["locked_for_user"] == True:
+            locked += 1
+        elif assignment["submission_types"][0] == "none":
+            ignored_no_submission += 1
+        elif assignment["submission_types"][0] == "not_graded":
+            ignored_not_graded += 1
+
+    print(f"Total Submitted: {submitted}")
+    print(f"Total Locked: {locked}")
+    print(f"Total Unsubmittable: {ignored_no_submission}")
+    print(f"Total Not_Graded: {ignored_not_graded}")
+    print(
+        f"Remaining Assignments: {(len(assignments)-submitted-ignored_not_graded-ignored_no_submission-locked)}"
+    )
+    print(f"\n Grading Statistics:")
+    print(f"Total Currently Graded: {max(instructor_graded,len(graded_timestamps))}")
+
+    latest_update = max(graded_timestamps)
+    print(f"Last Grade Update: {aslocaltimestr(latest_update)}")
+
+
 def update_task(assignment, task):
     try:
         todoist_api.update_task(task_id=task.id, due_datetime=assignment["due_at"])
     except Exception as error:
         print(f"Error while updating task: {error}")
+
+
+##Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
+def utc_to_local(utc_dt):
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
+
+
+def aslocaltimestr(utc_dt):
+    return utc_to_local(utc_dt).strftime("%Y-%m-%d %I:%M%p")
 
 
 if __name__ == "__main__":
