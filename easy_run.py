@@ -34,7 +34,6 @@ def main():
     create_todoist_projects()
     transfer_assignments_to_todoist()
     canvas_assignment_stats()
-    # canvas_grades()
     print("Done!")
 
 
@@ -401,14 +400,6 @@ def canvas_assignment_stats():
 
     latest_update = max(graded_timestamps)
     print(f"Last Grade Update: {aslocaltimestr(latest_update)}")
-
-
-# def canvas_grades():
-#     response = requests.get(
-#         f"{config['canvas_api_heading']}/api/v1/users/self/enrollments", headers=header, params=param
-#     )
-#     for i, course in enumerate(response.json(), start=1):
-#         print(f"{str(i)} ) {course.get('course_id', '')} : {str(course.get('course_id', ''))}")
 
 
 def update_task(assignment, task):
