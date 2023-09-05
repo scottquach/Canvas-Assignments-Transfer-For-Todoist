@@ -393,13 +393,15 @@ def canvas_assignment_stats():
     print(f"Total Unsubmittable: {ignored_no_submission}")
     print(f"Total Not_Graded: {ignored_not_graded}")
     print(
-        f"Remaining Assignments: {(len(assignments)-submitted-ignored_not_graded-ignored_no_submission-locked)}"
+        f"Remaining (unlocked) Assignments: {(len(assignments)-submitted-ignored_not_graded-ignored_no_submission-locked)}"
     )
     print(f"\n Grading Statistics:")
     print(f"Total Currently Graded: {max(instructor_graded,len(graded_timestamps))}")
-
-    latest_update = max(graded_timestamps)
-    print(f"Last Grade Update: {aslocaltimestr(latest_update)}")
+    latest_update = max(graded_timestamps, default=0)
+    if latest_update == 0:
+        print(f"Last Grade Update: Never")
+    else:
+        print(f"Last Grade Update: {aslocaltimestr(latest_update)}")
 
 
 def update_task(assignment, task):
