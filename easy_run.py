@@ -11,7 +11,7 @@ from random import randint
 # Loaded configuration files and creates a list of course_ids
 config = {}
 header = {}
-param = {"per_page": "100", "include": "submission"}
+param = {"per_page": "100", "include": "submission", "enrollment_state": "active"}
 course_ids = []
 assignments = []
 todoist_tasks = []
