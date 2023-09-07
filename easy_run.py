@@ -18,7 +18,10 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
-delay = randint(1, 3)  # random delay for throttling/rate limiting
+throttle_number = 50  # Number of requests to make before sleeping for delay seconds
+sleep_delay_max = 2500  # Maximum number of milliseconds to sleep for
+max_added = 250  # Maximum number of assignments to add to Todoist at once. Todoist API limit is 450 requests per 15 minutes and you can quickly hit this if adding a massive number of assignments.
+limit_reached = False
 
 
 def main():
@@ -202,8 +205,7 @@ def load_assignments():
                 exit()
             paginated = response.json()
             while "next" in response.links:
-                print(f"Sleeping for {delay} seconds...")
-                time.sleep(delay)
+                sleep()  # Throttle requests to Canvas API to prevent rate limiting on multiple pages
                 response = requests.get(
                     response.links["next"]["url"], headers=header, params=param
                 )
@@ -254,6 +256,9 @@ def transfer_assignments_to_todoist():
     updated = 0
     already_synced = 0
     excluded = 0
+    global limit_reached
+    global throttle_number
+    request_count = 0
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment["course_id"]]
         project_id = todoist_project_dict[course_name]
@@ -278,6 +283,7 @@ def transfer_assignments_to_todoist():
                         f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                     )
                     update_task(assignment, task)
+                    request_count += 1
                     break
                 # Check for existence of task.due first to prevent error
                 if task.due is not None:
@@ -288,6 +294,7 @@ def transfer_assignments_to_todoist():
                             f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                         )
                         update_task(assignment, task)
+                        request_count += 1
                         break
 
             # Handle case where assignment is not graded
@@ -344,12 +351,24 @@ def transfer_assignments_to_todoist():
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
+                request_count += 1
         # Update count of updated assignments (updated due date - already updated in Todoist)
         if is_added and not is_synced:
             updated += 1
         # Update count of already synced assignments (already synced to Todoist, no updates)
         if is_synced and is_added:
             already_synced += 1
+        if new_added > max_added:
+            limit_reached = True
+            break
+        # Throttle requests to Todoist API to prevent rate limiting, sleep every 50 requests
+        if request_count % throttle_number == 0 and request_count > 1:
+            print(f"Current request count: {request_count}")
+            sleep()
+    if limit_reached:
+        print(
+            f"Reached Todoist API or configured limit. Not all tasks added. Please try again in 15 minutes."
+        )
     print(f"  {'-'*52}")
     print(f"Added to Todoist: {new_added}")
     print(f"Due Date Updated In Todoist: {updated}")
@@ -360,13 +379,25 @@ def transfer_assignments_to_todoist():
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project corresponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_task(
-        content="[" + assignment["name"] + "](" + assignment["html_url"] + ")" + " Due",
-        project_id=project_id,
-        due_datetime=assignment["due_at"],
-        labels=config["todoist_task_labels"],
-        priority=config["todoist_task_priority"],
-    )
+    global limit_reached
+    try:
+        todoist_api.add_task(
+            content="["
+            + assignment["name"]
+            + "]("
+            + assignment["html_url"]
+            + ")"
+            + " Due",
+            project_id=project_id,
+            due_datetime=assignment["due_at"],
+            labels=config["todoist_task_labels"],
+            priority=config["todoist_task_priority"],
+        )
+    except Exception as error:
+        print(
+            f"Error while adding task: {error}, likely due to rate limiting. Try again in 15 minutes"
+        )
+        limit_reached = True
 
 
 def canvas_assignment_stats():
@@ -427,6 +458,15 @@ def utc_to_local(utc_dt):
 
 def aslocaltimestr(utc_dt):
     return utc_to_local(utc_dt).strftime("%Y-%m-%d %I:%M%p")
+
+
+# Function for throttling/sleeping
+def sleep():
+    delay = (
+        randint(100, sleep_delay_max) / 1000
+    )  # random delay for throttling/rate limiting
+    print(f"Sleeping for {delay} seconds...")
+    time.sleep(delay)
 
 
 if __name__ == "__main__":
