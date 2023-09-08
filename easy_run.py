@@ -21,7 +21,7 @@ todoist_project_dict = {}
 throttle_number = 50  # Number of requests to make before sleeping for delay seconds
 sleep_delay_max = 2500  # Maximum number of milliseconds to sleep for
 max_added = 250  # Maximum number of assignments to add to Todoist at once. Todoist API limit is 450 requests per 15 minutes and you can quickly hit this if adding a massive number of assignments.
-limit_reached = False
+limit_reached = False  # Global var used to terminate early if limit is reached or API returns an error.
 
 
 def main():
@@ -360,6 +360,7 @@ def transfer_assignments_to_todoist():
             already_synced += 1
         if new_added > max_added:
             limit_reached = True
+        if limit_reached:
             break
         # Throttle requests to Todoist API to prevent rate limiting, sleep every 50 requests
         if request_count % throttle_number == 0 and request_count > 1:
@@ -445,10 +446,12 @@ def canvas_assignment_stats():
 
 
 def update_task(assignment, task):
+    global limit_reached
     try:
         todoist_api.update_task(task_id=task.id, due_datetime=assignment["due_at"])
     except Exception as error:
         print(f"Error while updating task: {error}")
+        limit_reached = True
 
 
 # Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
