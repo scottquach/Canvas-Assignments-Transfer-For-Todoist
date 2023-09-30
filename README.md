@@ -25,7 +25,7 @@ Just install the dependencies and follow the instructions on screen.
 
 ## Known Issues/Limitations
 
-> :exclamation: Every teacher uses Canvas slightly differently. Your use of this script confirms YOUR responsibility to reeview Canvas regularly to ensure you are not behind.
+> :exclamation: Every teacher uses Canvas slightly differently. You agree that it is YOUR responsibility to review Canvas regularly to ensure you are staying current.
 
 Due Date Updates: The script will update due dates on tasks when the following conditions are met:
 1) The assignment in Canvas DOES have a due date
