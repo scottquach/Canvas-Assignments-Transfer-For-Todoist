@@ -27,7 +27,12 @@ Just install the dependencies and follow the instructions on screen.
 
 > :exclamation: Every teacher uses Canvas slighly differently. We cannot be 100% responsible for any grades or assignments missed. It is YOUR resoponsibility to reeview Canvas regularly to ensure you are not behind.
 
-Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas, as Todoist API does not accept "NULL" as a due date update value.  Due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
+Due Date Updates: The script will update due dates on tasks when the following conditions are met:
+1) The assignment in Canvas DOES have a due date
+2) The task in Todoist either does NOT have a due date, OR it has a due date that is LATER (in the future from) the Canvas Due Date..
+
+It will not REMOVE adue dates from Todoist (even if they are removed in Canvas), so you can set an artifical 'due date' in Todoist for assignments with no due date.
+It will also not update due dates if the due date is set earier than the one in Canvas (allowing you to artifically 'move' due dates earlier, but not later)
 
 Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
 
