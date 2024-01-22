@@ -192,7 +192,6 @@ def select_courses():
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
-
     try:
         for course_id in course_ids:
             response = requests.get(
@@ -320,12 +319,12 @@ def transfer_assignments_to_todoist():
                 excluded += 1
                 is_added = True
                 break
-            # Handle case where assignment is locked and unlock date is more than 1 day in the future
+            # Handle case where assignment is locked and unlock date is more than 2 days in the future
             if (
                 assignment["unlock_at"] is not None
                 and config["sync_locked_assignments"] == False
                 and assignment["unlock_at"]
-                > (datetime.now() + timedelta(days=1)).isoformat()
+                > (datetime.now() + timedelta(days=3)).isoformat()
             ):
                 print(
                     f"Excluding assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
