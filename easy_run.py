@@ -298,9 +298,11 @@ def transfer_assignments_to_todoist():
 
             # Handle case where assignment is not graded
             if config["sync_null_assignments"] == False:
+                ## This is hacky, but it works for now - need to fix this
                 if (
                     assignment["submission_types"][0] == "not_graded"
                     or assignment["submission_types"][0] == "none"
+                    or assignment["submission_types"][0] == "on_paper"
                 ):
                     print(
                         f"Excluding ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
