@@ -456,6 +456,7 @@ def update_task(assignment, task):
 
 
 # Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
+# This funciton is simply used for printing out graded and due dates in local time. It is not used for the task creation, as tasks MUST be created in UTC
 def utc_to_local(utc_dt):
     return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
