@@ -25,19 +25,24 @@ Just install the dependencies and follow the instructions on screen.
 
 ## Known Issues/Limitations
 
-> :exclamation: Every teacher uses Canvas slighly differently. We cannot be 100% responsible for any grades or assignments missed. It is YOUR resoponsibility to reeview Canvas regularly to ensure you are not behind.
+> :exclamation: Every teacher uses Canvas slightly differently. You agree that it is YOUR responsibility to review Canvas regularly to ensure you are staying current.
 
-Due Date Updates: The script will update due dates when they are modified. However it will not remove a due date if one is already set in Todoist, even if it is removed in Canvas, as Todoist API does not accept "NULL" as a due date update value.  Due dates will not be updated in the event that they are REMOVED in Canvas, only updated if they are added or are changed to a different date.
+Due Date Updates: The script will update due dates on tasks when the following conditions are met:
+1) The assignment in Canvas DOES have a due date
+2) The task in Todoist either does NOT have a due date, OR it has a due date that is LATER (in the future from) the Canvas Due Date..
+
+It will not REMOVE adue dates from Todoist (even if they are removed in Canvas), so you can set an artifical 'due date' in Todoist for assignments with no due date.
+It will also not update due dates if the due date is set earier than the one in Canvas (allowing you to artifically 'move' due dates earlier, but not later)
 
 Name or Assignment Changes: The script will not modify or remove Todist tasks retroactively, so if a teacher deletes or modifies an assignment, it will not be removed from Todoist. In the case of a name change, a new task would be created in Todoist with the new assignment name.
 
 Graded Assignments: This script ignores any assignments once they are graded.
 
-> :warning: This means that if a teacher enters "0" the assignment will be ignored, even if you have additional opportunities to submit it. Thus, it is recommended that you do not remove a task from Todoist until you are complete.
+> :warning: This means that if a teacher enters "0" the assignment will be ignored, even if you have additional opportunities to submit it. Thus, it is recommended that you do not remove a task from Todoist until you have submitted it.
 
 Submissions: This script assumes assignments with submissions do not need to be added.
 
-> :zap: You must keep track of any re-submissions or regrades seperately; this script does not have logic to handle them.
+> :zap: You must keep track of any re-submissions or re-grades seperately; this script does not have logic to handle them as they show up as already "submitted" in the API.
 
 Duplicate tasks: Tasks are tracked based on the the class name and assigment title within Canvas. The script does not delete or remove tasks. If a teacher renames an assignment, you will end up with two assignments in Todoist (one under the old name, one under the new name) - only the new one will be kept up to date with any date changes.
 
@@ -56,13 +61,10 @@ A: Teachers can set submission method for an assignment to "none" or "not graded
 
 Q: What are locked assignments?
 
-A: Teachers can lock assignments so they cannot be viewed or done. These locks can be because a module is not unlocked, or they can be set to unlock at a certain date. If the setting to not sync locked assignments is enabled, any assignment which is locked (or is not set to unlock within the next 24 hours) will not be synced.
+A: Teachers can lock assignments so they cannot be viewed or done. These locks can be because a module is not unlocked, or they can be set to unlock at a certain date. If the setting to not sync locked assignments is enabled, any assignment which will not be unlocked within the next 24 hours will not sync.
 
-## Contributing
-I use this regularly for my classes to sync to Todoist (which is my work System of Record), please open an issue for any problems you encounter or questions you have!
-
-## Troubleshooting
-If you encounter any issues, please open an Issue with the appropriate data
+## Contributing & Troubleshooting
+If you encounter any issues, please open an Issue with the appropriate data - I use this regularly for my classes to sync to Todoist (which is my work System of Record), please open an issue for any problems you encounter or questions you have!
 
 ## Contributors
 Thanks to all the below for their contributions!

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Import Libraries
 import requests
 import re
 import json
@@ -8,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 import time
 from random import randint
 
-# Loaded configuration files and creates a list of course_ids
+# Load configuration files and creates a list of course_ids
 config = {}
 header = {}
 param = {"per_page": "100", "include": "submission", "enrollment_state": "active"}
@@ -17,7 +18,10 @@ assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
 todoist_project_dict = {}
-delay = randint(1, 3)  # random delay for throttling/rate limiting
+throttle_number = 50  # Number of requests to make before sleeping for delay seconds
+sleep_delay_max = 2500  # Maximum number of milliseconds to sleep for
+max_added = 250  # Maximum number of assignments to add to Todoist at once. Todoist API limit is 450 requests per 15 minutes and you can quickly hit this if adding a massive number of assignments.
+limit_reached = False  # Global var used to terminate early if limit is reached or API returns an error.
 
 
 def main():
@@ -63,7 +67,7 @@ def initialize_api():
     header.update({"Authorization": f"Bearer {config['canvas_api_key'].strip()}"})
 
 
-def initial_config():
+def initial_config():  # Initial configuration for first time users
     print(
         "Your Todoist API key has not been configured. To add an API token, go to your Todoist settings and copy the API token listed under the Integrations Tab. Copy the token and paste below when you are done."
     )
@@ -122,8 +126,11 @@ def initial_config():
 
 # Allows the user to select the courses that they want to transfer while generating a dictionary
 # that has course ids as the keys and their names as the values
+
+
 def select_courses():
     global config
+
     try:
         response = requests.get(
             f"{config['canvas_api_heading']}/api/v1/courses",
@@ -133,7 +140,7 @@ def select_courses():
         if response.status_code == 401:
             print("Unauthorized; Check API Key")
             exit()
-
+        # Note that only courses in "Active" state are returned
         if config["courses"]:
             use_previous_input = input(
                 "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
@@ -152,6 +159,7 @@ def select_courses():
         print(f"Error while loading courses: {error}")
         print(f"Check API Key and Canvas URL")
         exit()
+
     # If the user does not choose to use courses selected last time
     for i, course in enumerate(response.json(), start=1):
         courses_id_name_dict[course.get("id", None)] = re.sub(
@@ -184,7 +192,6 @@ def select_courses():
 # Iterates over the course_ids list and loads all of the users assignments
 # for those classes. Appends assignment objects to assignments list
 def load_assignments():
-
     try:
         for course_id in course_ids:
             response = requests.get(
@@ -197,8 +204,7 @@ def load_assignments():
                 exit()
             paginated = response.json()
             while "next" in response.links:
-                print(f"Sleeping for {delay} seconds...")
-                time.sleep(delay)
+                sleep()  # Throttle requests to Canvas API to prevent rate limiting on multiple pages
                 response = requests.get(
                     response.links["next"]["url"], headers=header, params=param
                 )
@@ -249,6 +255,9 @@ def transfer_assignments_to_todoist():
     updated = 0
     already_synced = 0
     excluded = 0
+    global limit_reached
+    global throttle_number
+    request_count = 0
     for assignment in assignments:
         course_name = courses_id_name_dict[assignment["course_id"]]
         project_id = todoist_project_dict[course_name]
@@ -257,60 +266,67 @@ def transfer_assignments_to_todoist():
         is_synced = True
 
         for task in todoist_tasks:
+            # Check if assignment is already added to Todoist with same name and within the same Project
             if (
                 task.content == f"[{assignment['name']}]({assignment['html_url']}) Due"
                 and task.project_id == project_id
             ):
                 is_added = True
-                if (
-                    assignment["due_at"] is None
-                ):  ##Ignore updates if assignment has no due date and already synced
+                # Ignore updates if assignment has no due date and already synced
+                if assignment["due_at"] is None:
                     break
-                if (
-                    task.due is None and assignment["due_at"] is not None
-                ):  ##Handle case where task does not have due date but assignment does
+                # Handle case where task does not have due date but assignment does
+                if task.due is None and assignment["due_at"] is not None:
                     is_synced = False
                     print(
                         f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                     )
+                    update_task(assignment, task)
+                    request_count += 1
                     break
-                if (
-                    task.due is not None
-                ):  # Check for existence of task.due first to prevent error
-                    if (
-                        assignment["due_at"] != task.due.datetime
-                    ):  ## Handle case where assignment and task both have due dates but they are different
+                # Check for existence of task.due first to prevent error
+                if task.due is not None:
+                    # Handle case where assignment and task both have due dates but they are different
+                    if assignment["due_at"] != task.due.datetime:
                         is_synced = False
                         print(
                             f"Updating assignment due date: {course_name}:{assignment['name']} to {str(assignment['due_at'])}"
                         )
+                        update_task(assignment, task)
+                        request_count += 1
                         break
+
+            # Handle case where assignment is not graded
             if config["sync_null_assignments"] == False:
+                ## This is hacky, but it works for now - need to fix this
                 if (
                     assignment["submission_types"][0] == "not_graded"
                     or assignment["submission_types"][0] == "none"
-                ):  ##Handle case where assignment is not graded
+                    or assignment["submission_types"][0] == "on_paper"
+                ):
                     print(
                         f"Excluding ungraded/non-submittable assignment: {course_name}: {assignment['name']}"
                     )
                     is_added = True
                     excluded += 1
                     break
+            # Handle case where assignment has no due date and user has specified to not sync assignments with no due date
             if (
                 assignment["due_at"] is None
                 and config["sync_no_due_date_assignments"] == False
-            ):  ##Handle case where assignment has no due date
+            ):
                 print(
                     f"Excluding assignment with no due date: {course_name}: {assignment['name']}"
                 )
                 excluded += 1
                 is_added = True
                 break
+            # Handle case where assignment is locked and unlock date is more than 2 days in the future
             if (
                 assignment["unlock_at"] is not None
                 and config["sync_locked_assignments"] == False
                 and assignment["unlock_at"]
-                > (datetime.now() + timedelta(days=1)).isoformat()
+                > (datetime.now() + timedelta(days=3)).isoformat()
             ):
                 print(
                     f"Excluding assignment that is not yet unlocked: {course_name}: {assignment['name']}: {assignment['lock_explanation']}"
@@ -318,6 +334,7 @@ def transfer_assignments_to_todoist():
                 is_added = True
                 excluded += 1
                 break
+            # Handle case where assignment is locked and unlock date is empty
             if (
                 assignment["locked_for_user"] == True
                 and assignment["unlock_at"] is None
@@ -329,18 +346,31 @@ def transfer_assignments_to_todoist():
                 is_added = True
                 excluded += 1
                 break
-
+        # Add assignment to Todoist if not already added - Ignore assignments that are already submitted
         if not is_added:
             if assignment["submission"]["workflow_state"] == "unsubmitted":
                 print(f"Adding assignment {course_name}: {assignment['name']}")
                 add_new_task(assignment, project_id)
                 new_added += 1
+                request_count += 1
+        # Update count of updated assignments (updated due date - already updated in Todoist)
         if is_added and not is_synced:
-            update_task(assignment, task)
             updated += 1
-
+        # Update count of already synced assignments (already synced to Todoist, no updates)
         if is_synced and is_added:
             already_synced += 1
+        if new_added > max_added:
+            limit_reached = True
+        if limit_reached:
+            break
+        # Throttle requests to Todoist API to prevent rate limiting, sleep every 50 requests
+        if request_count % throttle_number == 0 and request_count > 1:
+            print(f"Current request count: {request_count}")
+            sleep()
+    if limit_reached:
+        print(
+            f"Reached Todoist API or configured limit. Not all tasks added. Please try again in 15 minutes."
+        )
     print(f"  {'-'*52}")
     print(f"Added to Todoist: {new_added}")
     print(f"Due Date Updated In Todoist: {updated}")
@@ -351,13 +381,25 @@ def transfer_assignments_to_todoist():
 # Adds a new task from a Canvas assignment object to Todoist under the
 # project corresponding to project_id
 def add_new_task(assignment, project_id):
-    todoist_api.add_task(
-        content="[" + assignment["name"] + "](" + assignment["html_url"] + ")" + " Due",
-        project_id=project_id,
-        due_datetime=assignment["due_at"],
-        labels=config["todoist_task_labels"],
-        priority=config["todoist_task_priority"],
-    )
+    global limit_reached
+    try:
+        todoist_api.add_task(
+            content="["
+            + assignment["name"]
+            + "]("
+            + assignment["html_url"]
+            + ")"
+            + " Due",
+            project_id=project_id,
+            due_datetime=assignment["due_at"],
+            labels=config["todoist_task_labels"],
+            priority=config["todoist_task_priority"],
+        )
+    except Exception as error:
+        print(
+            f"Error while adding task: {error}, likely due to rate limiting. Try again in 15 minutes"
+        )
+        limit_reached = True
 
 
 def canvas_assignment_stats():
@@ -405,19 +447,31 @@ def canvas_assignment_stats():
 
 
 def update_task(assignment, task):
+    global limit_reached
     try:
         todoist_api.update_task(task_id=task.id, due_datetime=assignment["due_at"])
     except Exception as error:
         print(f"Error while updating task: {error}")
+        limit_reached = True
 
 
-##Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
+# Credit to https://stackoverflow.com/questions/4563272/how-to-convert-a-utc-datetime-to-a-local-datetime-using-only-standard-library
+# This funciton is simply used for printing out graded and due dates in local time. It is not used for the task creation, as tasks MUST be created in UTC
 def utc_to_local(utc_dt):
     return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
 
 
 def aslocaltimestr(utc_dt):
     return utc_to_local(utc_dt).strftime("%Y-%m-%d %I:%M%p")
+
+
+# Function for throttling/sleeping
+def sleep():
+    delay = (
+        randint(100, sleep_delay_max) / 1000
+    )  # random delay for throttling/rate limiting
+    print(f"Sleeping for {delay} seconds...")
+    time.sleep(delay)
 
 
 if __name__ == "__main__":

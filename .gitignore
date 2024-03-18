@@ -159,3 +159,4 @@ cython_debug/
 config.json
 .pre-commit-config.yaml
 .vscode/settings.json
+*.code-workspace
